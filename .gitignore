@@ -5,6 +5,7 @@ secrets.yaml
 
 # Local Claude settings with tokens
 .claude/settings.json
+.claude/settings.local.json
 
 # Node
 node_modules/
