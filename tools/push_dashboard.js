@@ -18,7 +18,9 @@ const path = require('path');
 const HA_URL = 'ws://homeassistant.local:8123/api/websocket';
 const TOKEN = process.env.HASS_TOKEN;
 const DASHBOARD = process.argv[2] || 'dashboard-mushroom';
-const CONFIG_FILE = path.join(__dirname, `../_bmad/bmm/knowledge/inventory/raw/lovelace.${DASHBOARD}`);
+// File uses underscore (lovelace.dashboard_mushroom), HA URL uses hyphen (dashboard-mushroom)
+const FILE_KEY = DASHBOARD.replace(/-/g, '_');
+const CONFIG_FILE = path.join(__dirname, `../_bmad/bmm/knowledge/inventory/raw/lovelace.${FILE_KEY}`);
 
 if (!TOKEN) { console.error('ERROR: HASS_TOKEN environment variable not set.'); process.exit(1); }
 if (!fs.existsSync(CONFIG_FILE)) { console.error(`ERROR: Config file not found: ${CONFIG_FILE}`); process.exit(1); }
