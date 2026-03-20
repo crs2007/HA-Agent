@@ -5,7 +5,8 @@
 - **Location:** Hod HaSharon, Israel
 - **Coordinates:** 32.164358, 34.903672
 - **Timezone:** Asia/Jerusalem
-- **Scale:** 121 automations, 104 scripts, 2,600+ entities
+- **Scale:** 121 automations, 107 scripts, 3,619 entities, 363 devices, 73 integrations
+- **Last Inventory:** 2026-03-20 — see `knowledge/inventory/inventory-index.md`
 
 ## Companion Hardware
 - **Windows Desktop:** NVIDIA GTX 1080 Ti, Docker host
