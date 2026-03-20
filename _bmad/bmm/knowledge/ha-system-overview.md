@@ -28,7 +28,17 @@
 Bedroom (Parents), Lenny & Miley, Ofri, Kitchen, Living Room, Office, Hallway, Main Bathroom, Outdoor, Warehouse, Outdoor Hallway, Service Room, General
 
 ## Key Integrations
-Zigbee2MQTT (dual), Tuya Cloud + Tuya Local, Shelly, NUKI Smart Lock, Yi Cameras, Reolink Doorbell, Frigate, Doubletake, Google Home, Alexa Echo, Samsung TVs (samsungtv_tizen), Spotify/Spotcast, AWTRIX 3 (Ulanzi), Oref Alert, HebCal, LLM Vision, Broadlink remotes, iRobot Roomba, Google Drive Backup, Watchman
+Zigbee2MQTT (dual), Tuya Cloud + Tuya Local, Shelly, NUKI Smart Lock, Yi Cameras, Reolink Doorbell, Frigate, Doubletake, Google Home, Alexa (native + Alexa Media Player HACS), Samsung TVs (samsungtv_tizen), Spotify/Spotcast, AWTRIX 3 (Ulanzi), Oref Alert, HebCal, LLM Vision, Broadlink remotes, iRobot Roomba, Google Drive Backup, Watchman, Govee (Matter + Govee2MQTT)
+
+## Dual-Integration Devices
+Native HA integrations are preferred, but HACS/community integrations run alongside when native lacks features:
+
+| Device | Native | HACS / Community | Gap filled by HACS |
+|--------|--------|------------------|--------------------|
+| Alexa Echo | Alexa (HA native) | Alexa Media Player (HACS) | Volume control, TTS, media playback |
+| Govee LED | Matter | Govee to MQTT Bridge (app → MQTT) | LED scenes and effects |
+| Tuya | Tuya Cloud (`tuya`) | Tuya Local (`localtuya`) | Local speed, no cloud dependency |
+| Samsung TV | — | samsungtv_tizen (HACS, patched) | Full TV control, WoL, sources |
 
 ## Network
 | Service | Address |

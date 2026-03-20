@@ -55,6 +55,27 @@ Always use `| float(0)`, `| int(0)`, `| default(0)` fallbacks. Handle `unavailab
 ## Notification Preference
 **Prefer `script.smart_announcement_universal_notifier`** over direct `tts.speak` calls. It handles presence, auto-volume, DND, priority, and multi-platform delivery.
 
+## Dual-Integration Strategy (Native + HACS Side-by-Side)
+
+Sharon prefers native HA OS integrations as the baseline. However, when the native integration does not expose all device entities or features, a well-established HACS/community integration is added **alongside** the native one — not as a replacement.
+
+**Rule:** When both a native and a HACS integration exist for the same device:
+- Use the **native integration** for any entity it handles well
+- Use the **HACS integration** only for the specific features/entities the native one lacks
+- Document which entities come from which integration so future refactoring doesn't break things
+- When the native integration catches up (adds the missing feature), migrate off the HACS one
+
+**Known dual-integration devices:**
+
+| Device | Native Integration | HACS / Community Integration | Why HACS is needed |
+|--------|-------------------|-----------------------------|--------------------|
+| Alexa | Alexa (HA native) | Alexa Media Player (HACS) | Native doesn't support volume control yet |
+| Govee LED | Matter (native) | Govee to MQTT Bridge (app → MQTT) | Native Matter lacks LED scene/effect control |
+| Tuya | Tuya Cloud (`tuya`) | Tuya Local (`tuya_local` / `localtuya`) | Local is faster, no cloud dependency |
+| Samsung TV | — | samsungtv_tizen (HACS, patched) | Native Samsung integration is limited |
+
+When referencing these devices in automations, check which integration provides the entity you need. Don't assume all entities come from one source.
+
 ## Tuya Device Preference
 **Always prefer Tuya Local** (`tuya_local` domain) when available. Fall back to cloud Tuya only when no local entity exists.
 
