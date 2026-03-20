@@ -1,0 +1,33 @@
+# Secrets
+.env
+*.token
+secrets.yaml
+
+# Local Claude settings with tokens
+.claude/settings.json
+
+# Node
+node_modules/
+
+# Home Assistant database and runtime
+home-assistant_v2.db
+home-assistant_v2.db-shm
+home-assistant_v2.db-wal
+
+# HA Storage (UI-managed, large JSON)
+.storage/
+
+# HA runtime directories
+tts/
+.cloud/
+backups/
+__pycache__/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE
+.vscode/
+.idea/

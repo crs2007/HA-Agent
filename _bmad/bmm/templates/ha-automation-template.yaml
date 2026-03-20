@@ -1,0 +1,22 @@
+# Home Assistant Automation Template
+# Copy and customize for new automations
+# Follow checklist: _bmad/bmm/checklists/automation-review.md
+
+- id: "UNIQUE_ID_HERE"
+  alias: "Descriptive Automation Name"
+  description: "What this automation does and why"
+  mode: single  # Choose: single | restart | queued | parallel
+  triggers:
+    - trigger: state
+      entity_id: sensor.example
+      to: "on"
+  conditions:
+    # Room hold check (if applicable — ask Sharon)
+    # - condition: state
+    #   entity_id: input_boolean.ROOM_stopautomation
+    #   state: "off"
+  actions:
+    - action: notify.mobile_app_sharon_mobile
+      data:
+        message: "Notification message"
+      continue_on_error: true

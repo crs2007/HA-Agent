@@ -1,0 +1,22 @@
+# Home Assistant Script Template
+# Copy and customize for new scripts
+
+script_name:
+  alias: "Descriptive Script Name"
+  description: "What this script does"
+  mode: single  # Choose: single | restart | queued | parallel
+  fields:
+    target_entity:
+      description: "Description of the field"
+      example: "light.living_room"
+      required: true
+      selector:
+        entity:
+          domain: light
+  sequence:
+    - action: light.turn_on
+      target:
+        entity_id: "{{ target_entity }}"
+      data:
+        brightness_pct: 100
+      continue_on_error: true
