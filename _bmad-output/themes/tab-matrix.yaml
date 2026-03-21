@@ -1,0 +1,61 @@
+# Tab Matrix Theme — Terminal/hacker, phosphor green on black, CRT scanlines
+# Apply to any dashboard view via: "theme": "tab-matrix"
+# Person-tracker-card layout match: layout: "neon" (closest available)
+
+tab-matrix:
+  card-mod-theme: tab-matrix
+
+  # Global ha-card styling
+  card-mod-card: |
+    ha-card {
+      background: #000000 !important;
+      border: 1px solid rgba(0, 255, 65, 0.35) !important;
+      border-radius: 4px !important;
+      color: #00ff41 !important;
+      font-family: monospace !important;
+      text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.15) !important;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    ha-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(0, 255, 65, 0.04) 1px,
+        rgba(0, 255, 65, 0.04) 2px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+    ha-card:hover {
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.25) !important;
+      border-color: rgba(0, 255, 65, 0.55) !important;
+    }
+
+  # View background
+  card-mod-view: |
+    hui-view, hui-masonry-view {
+      background: #000000 !important;
+      min-height: 100vh;
+    }
+
+  # HA native color variables
+  primary-color: "#00ff41"
+  accent-color: "#00ff41"
+  primary-text-color: "#00ff41"
+  secondary-text-color: "rgba(0, 255, 65, 0.5)"
+  card-background-color: "#000000"
+  state-icon-color: "#00ff41"
+  state-icon-active-color: "#00ff41"
+  switch-checked-color: "#00ff41"
+  switch-unchecked-button-color: "rgba(0, 255, 65, 0.3)"
+  slider-color: "#00ff41"

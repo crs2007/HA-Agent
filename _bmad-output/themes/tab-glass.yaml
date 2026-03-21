@@ -1,0 +1,33 @@
+# Tab Glass Theme — Frosted glassmorphism
+# Apply to any dashboard view via: "theme": "tab-glass"
+# Person-tracker-card layout match: layout: "glass"
+
+tab-glass:
+  card-mod-theme: tab-glass
+
+  # Global ha-card styling (no !important — allows per-card overrides)
+  card-mod-card: |
+    ha-card {
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    ha-card:hover {
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
+    }
+
+  # View background — neutral dark to let glass cards shine
+  card-mod-view: |
+    hui-view, hui-masonry-view {
+      background: #111111 !important;
+      min-height: 100vh;
+    }
+
+  # HA native color variables
+  primary-color: "#00d4ff"
+  accent-color: "#00d4ff"
+  card-background-color: "rgba(255, 255, 255, 0.08)"

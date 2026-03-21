@@ -1,0 +1,65 @@
+# Tab Holo Theme — Holographic 3D, iridescent shimmer, cyan accents
+# Apply to any dashboard view via: "theme": "tab-holo"
+# Person-tracker-card layout match: layout: "holo"
+
+tab-holo:
+  card-mod-theme: tab-holo
+
+  # Global ha-card styling
+  card-mod-card: |
+    ha-card {
+      background: linear-gradient(155deg, rgba(12, 12, 30, 0.97) 0%, rgba(8, 8, 20, 0.99) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.07) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4) !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    ha-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 40%,
+        rgba(0, 212, 255, 0.03) 45%,
+        rgba(0, 212, 255, 0.06) 50%,
+        rgba(0, 212, 255, 0.03) 55%,
+        transparent 60%
+      );
+      animation: holo-shimmer 6s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+    @keyframes holo-shimmer {
+      0%, 100% { transform: translateX(-30%) translateY(-30%) rotate(0deg); }
+      50% { transform: translateX(30%) translateY(30%) rotate(5deg); }
+    }
+    ha-card:hover {
+      box-shadow: 0 6px 35px rgba(0, 212, 255, 0.15) !important;
+      border-color: rgba(0, 212, 255, 0.2) !important;
+    }
+
+  # View background
+  card-mod-view: |
+    hui-view, hui-masonry-view {
+      background: linear-gradient(155deg, #0c0c1e 0%, #080814 100%) !important;
+      min-height: 100vh;
+    }
+
+  # HA native color variables
+  primary-color: "#00d4ff"
+  accent-color: "#00d4ff"
+  primary-text-color: "rgba(255, 255, 255, 0.9)"
+  secondary-text-color: "rgba(255, 255, 255, 0.5)"
+  card-background-color: "rgba(12, 12, 30, 0.97)"
+  state-icon-color: "#00d4ff"
+  state-icon-active-color: "#00d4ff"
+  switch-checked-color: "#00d4ff"
+  slider-color: "#00d4ff"

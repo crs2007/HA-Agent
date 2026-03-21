@@ -1,0 +1,56 @@
+# Tab Neon Theme — Cyberpunk scanlines, green glow, monospace
+# Apply to any dashboard view via: "theme": "tab-neon"
+# Person-tracker-card layout match: layout: "neon"
+
+tab-neon:
+  card-mod-theme: tab-neon
+
+  # Global ha-card styling
+  card-mod-card: |
+    ha-card {
+      background: rgba(0, 0, 0, 0.85) !important;
+      border: 1px solid rgba(0, 255, 136, 0.4) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.15), inset 0 0 15px rgba(0, 255, 136, 0.05) !important;
+      font-family: 'Courier New', monospace !important;
+      color: #00ff88 !important;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    ha-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 255, 136, 0.03) 2px,
+        rgba(0, 255, 136, 0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+    ha-card:hover {
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.25), inset 0 0 20px rgba(0, 255, 136, 0.08) !important;
+      border-color: rgba(0, 255, 136, 0.6) !important;
+    }
+
+  # View background
+  card-mod-view: |
+    hui-view, hui-masonry-view {
+      background: #000000 !important;
+      min-height: 100vh;
+    }
+
+  # HA native color variables
+  primary-color: "#00ff88"
+  accent-color: "#ff2255"
+  primary-text-color: "#00ff88"
+  secondary-text-color: "rgba(0, 255, 136, 0.6)"
+  card-background-color: "rgba(0, 0, 0, 0.85)"
+  state-icon-color: "#00ff88"
