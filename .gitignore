@@ -3,6 +3,9 @@
 *.token
 secrets.yaml
 
+# HA config entries (contains OAuth tokens)
+_bmad/bmm/knowledge/inventory/raw/core.config_entries
+
 # Local Claude settings with tokens
 .claude/settings.json
 .claude/settings.local.json
