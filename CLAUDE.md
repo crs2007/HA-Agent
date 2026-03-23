@@ -60,3 +60,10 @@ Agents don't call each other directly. Sharon orchestrates. However:
 - **Language:** Hebrew primary, English secondary
 
 See `_bmad/bmm/knowledge/` for full coding conventions, dashboard rules, and system overview.
+
+## Versioning
+
+- **Format:** CalVer `YYYY.MM.DD.Minor` (e.g., `2026.03.23.0`)
+- Minor starts at `0` and increments for multiple releases on the same day
+- Version and release date are tracked at the top of `README.md`
+- When releasing a new version, update both the **Version** and **Release Date** fields in `README.md`

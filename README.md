@@ -1,5 +1,8 @@
 # HA Agent — BMAD Multi-Agent System for Home Assistant
 
+**Version:** 2026.03.23.0
+**Release Date:** 2026-03-23
+
 > **Repo:** [crs2007/HA-Agent](https://github.com/crs2007/HA-Agent) · **HA Config:** [crs2007/Home-Assistant_Config](https://github.com/crs2007/Home-Assistant_Config)
 
 A [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) project with three specialized AI agents for managing a Home Assistant smart home system via Claude Code.
