@@ -12,7 +12,7 @@ All operations use `gh` CLI and GitHub API — no local clone needed.
 
 ## 2. Check for Duplicate PRs
 
-- [ ] Run: `gh pr list --repo crs2007/Home-Assistant_Config --label watchman --state open`
+- [ ] Run: `gh pr list --repo {ha_config_repo} --label watchman --state open`
 - [ ] Compare existing open PRs with new findings
 - [ ] Skip findings that already have an open PR
 - [ ] Note PRs that may have been resolved but not merged
@@ -26,17 +26,17 @@ All operations use `gh` CLI and GitHub API — no local clone needed.
 ## 4. Create Branch on GitHub
 
 For each PR (single or batch):
-- [ ] Get latest commit SHA from main: `gh api repos/crs2007/Home-Assistant_Config/git/ref/heads/master`
+- [ ] Get latest commit SHA from main: `gh api repos/{ha_config_repo}/git/ref/heads/master`
 - [ ] Branch naming:
   - Single entity: `watchman/{severity}/{entity-slug}` (e.g., `watchman/critical/light-office-ceiling`)
   - Batch: `watchman/{severity}/batch-{description}-{date}` (e.g., `watchman/high/batch-zigbee-offline-2026-03-24`)
-- [ ] Create branch via API: `gh api repos/crs2007/Home-Assistant_Config/git/refs -f ref=refs/heads/{branch} -f sha={commit_sha}`
+- [ ] Create branch via API: `gh api repos/{ha_config_repo}/git/refs -f ref=refs/heads/{branch} -f sha={commit_sha}`
 
 ## 5. Create Diagnostic File on Branch
 
 - [ ] Create `_watchman-fix.md` on the branch via contents API:
   ```
-  gh api repos/crs2007/Home-Assistant_Config/contents/_watchman-fix.md \
+  gh api repos/{ha_config_repo}/contents/_watchman-fix.md \
     -X PUT \
     -f message="[watchman] Add diagnostic context for {entity_id}" \
     -f branch={branch} \
@@ -49,7 +49,7 @@ For each PR (single or batch):
 - [ ] Create draft PR via `gh pr create`:
   ```
   gh pr create \
-    --repo crs2007/Home-Assistant_Config \
+    --repo {ha_config_repo} \
     --head {branch} \
     --base master \
     --title "[watchman] {entity_id} — {brief description}" \
@@ -63,7 +63,7 @@ For each PR (single or batch):
 - [ ] Add labels to the PR:
   ```
   gh pr edit {pr_number} \
-    --repo crs2007/Home-Assistant_Config \
+    --repo {ha_config_repo} \
     --add-label "watchman,severity:{level},agent:reviver,status:needs-implementation"
   ```
 

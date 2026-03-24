@@ -8,7 +8,7 @@ This is a BMAD-METHOD project with four specialized AI agents for managing Sharo
 - **Platform:** Home Assistant OS on Raspberry Pi 4
 - **Location:** Hod HaSharon, Israel | Timezone: Asia/Jerusalem
 - **Scale:** 121 automations, 104 scripts, 2,600+ entities, 14 areas
-- **HA Config Repo:** `crs2007/Home-Assistant_Config` (local: `E:\GitHub\Home-Assistant_Config`)
+- **HA Config Local:** `E:\GitHub\Home-Assistant_Config` (no GitHub mirror yet — Pi is sole source of truth)
 
 ## BMAD Agents
 
@@ -37,7 +37,7 @@ The `HASS_TOKEN` environment variable must be set before launching Claude Code.
 
 1. **Before any config change:** Compare local repo with live Pi config (via MCP). If they differ, ask Sharon which version to keep.
 2. **Sharon may edit directly on the Pi** via HA UI or File Editor add-on. Always check for drift.
-3. **After changes:** Commit locally, push to `crs2007/Home-Assistant_Config`
+3. **After changes:** Commit locally (no GitHub remote yet — push when repo is created)
 4. **Commit prefixes:** `[automation]`, `[script]`, `[fix]`, `[dashboard]`, `[config]`
 5. **Never commit:** `secrets.yaml`, `.storage/`, `home-assistant_v2.db`
 
@@ -46,7 +46,7 @@ The `HASS_TOKEN` environment variable must be set before launching Claude Code.
 Agents don't call each other directly. Sharon orchestrates. The primary workflow uses GitHub PRs:
 
 ### Watchman PR Pipeline
-1. **Reviver** runs Watchman report → creates **draft PRs** (critical/high/medium) or **Issues** (low) on `crs2007/Home-Assistant_Config`
+1. **Reviver** runs Watchman report → creates **draft PRs** (critical/high/medium) or **Issues** (low) on the HA config repo (when GitHub mirror is set up)
 2. **Developer** picks up a draft PR (`[WP]` menu) → implements the fix → marks ready for review
 3. **Reviewer** reviews the PR (`[RP]` menu) → validates via MCP + automation checklist → approves or requests changes
 4. **Sharon** merges approved PRs

@@ -26,8 +26,8 @@ Step-by-step process for the Reviver (Watch) agent to audit and maintain HA heal
 - [ ] Cross-reference offline Zigbee devices with Watchman findings
 
 ## 5. Check Existing GitHub Issues AND PRs
-- [ ] Run `gh issue list --repo crs2007/Home-Assistant_Config --label watchman`
-- [ ] Run `gh pr list --repo crs2007/Home-Assistant_Config --label watchman --state open`
+- [ ] Run `gh issue list --repo {ha_config_repo} --label watchman`
+- [ ] Run `gh pr list --repo {ha_config_repo} --label watchman --state open`
 - [ ] Compare existing issues and PRs with new findings
 - [ ] Skip creating duplicates
 - [ ] Note issues/PRs that may have been resolved

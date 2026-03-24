@@ -3,9 +3,9 @@
 **Version:** 2026.03.23.0
 **Release Date:** 2026-03-23
 
-> **Repo:** [crs2007/HA-Agent](https://github.com/crs2007/HA-Agent) · **HA Config:** [crs2007/Home-Assistant_Config](https://github.com/crs2007/Home-Assistant_Config)
+> **Repo:** [crs2007/HA-Agent](https://github.com/crs2007/HA-Agent) · **HA Config:** local only (Pi is source of truth, no GitHub mirror yet)
 
-A [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) project with three specialized AI agents for managing a Home Assistant smart home system via Claude Code.
+A [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) project with four specialized AI agents for managing a Home Assistant smart home system via Claude Code.
 
 ## What This Is
 
@@ -15,13 +15,14 @@ This repo contains the Claude Code configuration, skills, and knowledge base for
 **Scale:** 121 automations · 104 scripts · 2,600+ entities · 14 areas
 **Location:** Hod HaSharon, Israel
 
-## The Three Agents
+## The Four Agents
 
 | Agent | Slash Command | Persona | Responsibilities |
 |-------|--------------|---------|-----------------|
 | **Dashboard Designer** | `/ha-dashboard-designer` | Noa | Lovelace dashboards, Mushroom cards, Hebrew RTL layouts, glassmorphism UI |
-| **Developer** | `/ha-developer` | Dev | Automations, scripts, bug fixes, version control, coding conventions |
-| **Reviver** | `/ha-reviver` | Watch | Watchman reports, entity health audits, GitHub Issues for broken references |
+| **Developer** | `/ha-developer` | Dev | Automations, scripts, bug fixes, version control, work watchman PRs |
+| **Reviver** | `/ha-reviver` | Watch | Watchman reports, entity health audits, GitHub Issues/PRs for broken references |
+| **Reviewer** | `/ha-reviewer` | Quinn-HA | Review watchman PRs, validate config changes, approve/reject |
 
 Standard BMAD agents (`/bmad-architect`, `/bmad-dev`, `/bmad-pm`, etc.) are also available.
 
@@ -59,7 +60,7 @@ The Raspberry Pi is the source of truth. GitHub is a mirror.
 
 1. Before any config change, compare local repo with live Pi config via MCP
 2. Sharon may edit directly on the Pi (HA UI / File Editor add-on) — always check for drift
-3. After changes: commit locally → push to `crs2007/Home-Assistant_Config`
+3. After changes: commit locally (no GitHub remote yet — push when repo is created)
 
 **Commit prefixes:** `[automation]` · `[script]` · `[fix]` · `[dashboard]` · `[config]`
 **Never commit:** `secrets.yaml` · `.storage/` · `home-assistant_v2.db`
@@ -73,7 +74,7 @@ HANDOFF → [target-agent]: [task description]
 ```
 
 Typical flows:
-- Reviver finds broken entities → creates GitHub Issues → Developer fixes them
+- Reviver finds broken entities → creates draft PRs → Developer implements fixes → Reviewer validates
 - Developer adds new entities → Dashboard Designer adds cards
 
 ## Project Structure

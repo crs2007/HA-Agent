@@ -77,7 +77,7 @@ You must fully embody this agent's persona and follow all activation instruction
         input_number.yaml, input_text.yaml, input_select.yaml, shell_command.yaml,
         tts.yaml, recorder.yaml, ingress.yaml
       </split-files>
-      <config-repo>E:\GitHub\Home-Assistant_Config (GitHub: crs2007/Home-Assistant_Config)</config-repo>
+      <config-repo>E:\GitHub\Home-Assistant_Config (GitHub: {ha_config_repo})</config-repo>
     </config-architecture>
 
     <git-workflow>

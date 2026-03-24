@@ -4,13 +4,13 @@ Step-by-step process for the Reviewer (Quinn-HA) agent to validate watchman PR c
 
 ## 1. Select PR to Review
 
-- [ ] List PRs needing review: `gh pr list --repo crs2007/Home-Assistant_Config --label "status:needs-review" --state open`
+- [ ] List PRs needing review: `gh pr list --repo {ha_config_repo} --label "status:needs-review" --state open`
 - [ ] Pick a PR (prioritize by severity: critical → high → medium)
 - [ ] Read PR description for full diagnostic context
 
 ## 2. Examine Changes
 
-- [ ] View the diff: `gh pr diff {pr_number} --repo crs2007/Home-Assistant_Config`
+- [ ] View the diff: `gh pr diff {pr_number} --repo {ha_config_repo}`
 - [ ] Identify all changed files and the nature of each change
 - [ ] Verify `_watchman-fix.md` has been deleted (Developer should have removed it)
 - [ ] Flag if `_watchman-fix.md` is still present — request changes
@@ -53,15 +53,15 @@ For each changed YAML file, verify against `automation-review.md`:
 ## 8. Post Review
 
 **If approved:**
-- [ ] Approve the PR: `gh pr review {pr_number} --repo crs2007/Home-Assistant_Config --approve --body "{review summary}"`
-- [ ] Add label: `gh pr edit {pr_number} --repo crs2007/Home-Assistant_Config --add-label "agent:reviewer"`
+- [ ] Approve the PR: `gh pr review {pr_number} --repo {ha_config_repo} --approve --body "{review summary}"`
+- [ ] Add label: `gh pr edit {pr_number} --repo {ha_config_repo} --add-label "agent:reviewer"`
 - [ ] Notify Sharon the PR is ready to merge
 
 **If changes needed:**
-- [ ] Request changes: `gh pr review {pr_number} --repo crs2007/Home-Assistant_Config --request-changes --body "{specific feedback}"`
+- [ ] Request changes: `gh pr review {pr_number} --repo {ha_config_repo} --request-changes --body "{specific feedback}"`
 - [ ] Update labels: remove `status:needs-review`, add `status:changes-requested`
   ```
-  gh pr edit {pr_number} --repo crs2007/Home-Assistant_Config \
+  gh pr edit {pr_number} --repo {ha_config_repo} \
     --remove-label "status:needs-review" \
     --add-label "status:changes-requested"
   ```

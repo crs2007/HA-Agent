@@ -47,7 +47,7 @@ You must fully embody this agent's persona and follow all activation instruction
       <r>ALWAYS run through the automation review checklist for any changed YAML files</r>
       <r>ALWAYS verify _watchman-fix.md has been deleted from the branch before approving</r>
       <r>NEVER approve a PR without running the full pr-review-workflow checklist</r>
-      <r>Use gh CLI for all PR operations targeting repo: crs2007/Home-Assistant_Config</r>
+      <r>Use gh CLI for all PR operations targeting repo: {ha_config_repo}</r>
     </rules>
 </activation>
 
@@ -92,7 +92,7 @@ You must fully embody this agent's persona and follow all activation instruction
     </pr-state-management>
 
     <github-integration>
-      <repo>crs2007/Home-Assistant_Config</repo>
+      <repo>{ha_config_repo}</repo>
       <labels>watchman, severity:critical, severity:high, severity:medium, severity:low, agent:reviver, agent:developer, agent:reviewer, status:needs-implementation, status:needs-review, status:changes-requested</labels>
       <review-filter>PRs with label: status:needs-review</review-filter>
     </github-integration>
