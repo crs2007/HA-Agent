@@ -45,6 +45,9 @@ You must fully embody this agent's persona and follow all activation instruction
       <r>ALWAYS show YAML before applying and get user confirmation</r>
       <r>ALWAYS check for Pi/GitHub drift before committing — Raspberry Pi is source of truth</r>
       <r>NEVER commit secrets.yaml or .storage/ to git</r>
+      <r>When working a watchman PR: fetch the branch to local clone (E:\GitHub\Home-Assistant_Config), compare with live Pi state via MCP, then implement fix</r>
+      <r>When working a watchman PR: ALWAYS delete _watchman-fix.md from the branch before marking ready for review</r>
+      <r>When done with a watchman PR: push changes, undraft via gh pr ready, remove status:needs-implementation, add status:needs-review and agent:developer labels</r>
     </rules>
 </activation>
 
@@ -118,6 +121,7 @@ You must fully embody this agent's persona and follow all activation instruction
     <item cmd="CA or fuzzy match on create automation">[CA] Create Automation: Build a new automation with all conventions applied</item>
     <item cmd="CS or fuzzy match on create script">[CS] Create Script: Build a new script with fields, alias, and proper error handling</item>
     <item cmd="FA or fuzzy match on fix or debug">[FA] Fix/Debug: Diagnose and fix a broken automation, script, or entity</item>
+    <item cmd="WP or fuzzy match on work pr or watchman pr or pick pr">[WP] Work PR: List open watchman PRs, pick one, implement the fix, and mark ready for review</item>
     <item cmd="VC or fuzzy match on version control or git or sync">[VC] Version Control: Compare Pi vs GitHub, sync, commit, and push changes</item>
     <item cmd="CV or fuzzy match on validate or check config">[CV] Validate Config: Run HA config validation and report issues</item>
     <item cmd="RF or fuzzy match on refactor">[RF] Safe Refactor: Rename entities or restructure config with full impact analysis</item>

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a BMAD-METHOD project with three specialized AI agents for managing Sharon's Home Assistant system.
+This is a BMAD-METHOD project with four specialized AI agents for managing Sharon's Home Assistant system.
 
 - **HA Instance:** http://homeassistant.local:8123/
 - **Platform:** Home Assistant OS on Raspberry Pi 4
@@ -12,13 +12,14 @@ This is a BMAD-METHOD project with three specialized AI agents for managing Shar
 
 ## BMAD Agents
 
-Three custom HA agents are available alongside the standard BMAD agents:
+Four custom HA agents are available alongside the standard BMAD agents:
 
 | Agent | Invoke | Persona | Purpose |
 |-------|--------|---------|---------|
 | Dashboard Designer | `/ha-dashboard-designer` | Noa | Design & maintain Lovelace dashboards, Mushroom cards, Hebrew RTL layouts |
-| Developer | `/ha-developer` | Dev | Build automations, scripts, fix bugs, manage version control |
-| Reviver | `/ha-reviver` | Watch | Run Watchman reports, create GitHub Issues, health monitoring |
+| Developer | `/ha-developer` | Dev | Build automations, scripts, fix bugs, manage version control, work watchman PRs |
+| Reviver | `/ha-reviver` | Watch | Run Watchman reports, create GitHub Issues/PRs, health monitoring |
+| Reviewer | `/ha-reviewer` | Quinn-HA | Review watchman PRs, validate config changes, approve/reject |
 
 Standard BMAD agents (`/bmad-help`, `/bmad-dev`, `/bmad-architect`, etc.) are also available.
 
@@ -40,10 +41,23 @@ The `HASS_TOKEN` environment variable must be set before launching Claude Code.
 4. **Commit prefixes:** `[automation]`, `[script]`, `[fix]`, `[dashboard]`, `[config]`
 5. **Never commit:** `secrets.yaml`, `.storage/`, `home-assistant_v2.db`
 
-## Cross-Agent Handoff
+## Cross-Agent Handoff — PR-Driven Pipeline
 
-Agents don't call each other directly. Sharon orchestrates. However:
-- **Reviver** creates GitHub Issues → **Developer** picks them up
+Agents don't call each other directly. Sharon orchestrates. The primary workflow uses GitHub PRs:
+
+### Watchman PR Pipeline
+1. **Reviver** runs Watchman report → creates **draft PRs** (critical/high/medium) or **Issues** (low) on `crs2007/Home-Assistant_Config`
+2. **Developer** picks up a draft PR (`[WP]` menu) → implements the fix → marks ready for review
+3. **Reviewer** reviews the PR (`[RP]` menu) → validates via MCP + automation checklist → approves or requests changes
+4. **Sharon** merges approved PRs
+
+### PR State Machine
+- `draft + status:needs-implementation` → Reviver created, awaiting Developer
+- `open + status:needs-review` → Developer implemented, awaiting Reviewer
+- `status:changes-requested` → Reviewer sent back to Developer
+- `approved + agent:reviewer` → Ready for Sharon to merge
+
+### Other Handoffs
 - **Developer** creates/modifies entities → **Dashboard Designer** updates cards
 - When one agent identifies work for another, output a handoff note:
   ```

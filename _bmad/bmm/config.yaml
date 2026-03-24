@@ -37,3 +37,7 @@ custom_agents:
     displayName: Watch
     title: HA Reviver Agent
     file: "{project-root}/_bmad/bmm/agents/ha-reviver.md"
+  - name: ha-reviewer
+    displayName: Quinn-HA
+    title: HA PR Reviewer
+    file: "{project-root}/_bmad/bmm/agents/ha-reviewer.md"
