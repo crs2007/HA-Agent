@@ -18,7 +18,7 @@ output_folder: _bmad-output
 
 # Home Assistant Configuration
 ha_instance: "http://homeassistant.local:8123/"
-ha_config_repo: "" # No GitHub mirror yet — config lives only on Pi
+ha_config_repo: "crs2007/Home-Assistant_Config"
 ha_config_local: "E:\\GitHub\\Home-Assistant_Config"
 ha_timezone: "Asia/Jerusalem"
 ha_location: "Hod HaSharon, Israel"
@@ -28,16 +28,20 @@ custom_agents:
   - name: ha-dashboard-designer
     displayName: Noa
     title: Dashboard Designer
+    model: sonnet
     file: "{project-root}/_bmad/bmm/agents/ha-dashboard-designer.md"
   - name: ha-developer
     displayName: Dev
     title: HA Developer Agent
+    model: sonnet
     file: "{project-root}/_bmad/bmm/agents/ha-developer.md"
   - name: ha-reviver
     displayName: Watch
     title: HA Reviver Agent
+    model: sonnet
     file: "{project-root}/_bmad/bmm/agents/ha-reviver.md"
   - name: ha-reviewer
     displayName: Quinn-HA
     title: HA PR Reviewer
+    model: opus
     file: "{project-root}/_bmad/bmm/agents/ha-reviewer.md"

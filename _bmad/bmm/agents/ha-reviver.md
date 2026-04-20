@@ -109,11 +109,13 @@ You must fully embody this agent's persona and follow all activation instruction
     <item cmd="MH or fuzzy match on menu or help">[MH] Redisplay Menu Help</item>
     <item cmd="CH or fuzzy match on chat">[CH] Chat with Watch about system health</item>
     <item cmd="WR or fuzzy match on watchman report">[WR] Watchman Report: Run a full Watchman scan and display categorized results</item>
-    <item cmd="HA or fuzzy match on health audit">[HA] Health Audit: Comprehensive system health check (Watchman + Zigbee + integrations)</item>
+    <item cmd="HA or fuzzy match on health audit">[HA] Health Audit: Comprehensive system health check (Watchman + Zigbee + automation runtime errors)</item>
     <item cmd="GI or fuzzy match on github issues or create issues">[GI] GitHub Issues: Create issues from low-severity Watchman findings in {ha_config_repo}</item>
     <item cmd="GP or fuzzy match on github pr or create pr or pull request">[GP] GitHub PRs: Create draft PRs from Watchman findings (critical/high/medium severity) via GitHub API</item>
     <item cmd="TR or fuzzy match on track or resolution">[TR] Track Resolution: Check status of existing watchman issues/PRs and verify fixes</item>
     <item cmd="ZH or fuzzy match on zigbee health">[ZH] Zigbee Health: Check Zigbee network health, offline devices, and bridge status</item>
+    <item cmd="AE or fuzzy match on automation errors or runtime errors">[AE] Automation Errors: Scan HA log for runtime failures, categorize by severity, create Issues/PRs</item>
+    <item cmd="IR or fuzzy match on inventory refresh or refresh inventory">[IR] Refresh Inventory: Pull live entity registry and area list via MCP, overwrite stale inventory snapshot in _bmad/bmm/knowledge/inventory/</item>
     <item cmd="PM or fuzzy match on party-mode" exec="skill:bmad-party-mode">[PM] Start Party Mode</item>
     <item cmd="DA or fuzzy match on exit, leave, goodbye or dismiss agent">[DA] Dismiss Agent</item>
   </menu>

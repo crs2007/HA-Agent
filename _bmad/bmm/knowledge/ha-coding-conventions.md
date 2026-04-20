@@ -102,6 +102,28 @@ When referencing these devices in automations, check which integration provides 
 5. Test: `ha core check` and test affected automations
 
 ## Git Conventions
-- Raspberry Pi is source of truth
+- The live HA instance is source of truth (currently hosted on Proxmox VM 102)
 - Commit prefixes: `[automation]`, `[script]`, `[fix]`, `[dashboard]`, `[config]`
 - Never commit: `secrets.yaml`, `.storage/`, `home-assistant_v2.db`
+
+## MCP Tool Reference (ha-mcp v7.x)
+
+Available via the `ha-mcp` MCP server (homeassistant-ai/ha-mcp, ~85 tools).
+Requires `ha_mcp_tools` custom component in HA for file system and YAML editing tools.
+
+| Need | Tool | Key Parameters |
+|---|---|---|
+| Get single automation | `ha_get_automation` | `entity_id` or `alias` |
+| Get single script | `ha_get_script` | `entity_id` |
+| Search config for entity | `ha_search_config_deep` | `query` |
+| Validate HA config | `ha_check_config` | — |
+| Read HA error log | `ha_get_logs` | `level`, `search`, `limit` |
+| Get automation trace | `ha_get_automation_traces` | `automation_id` |
+| Render Jinja2 template | `ha_eval_template` | `template` |
+| Pull dashboard config | `ha_config_get_dashboard` | `dashboard_path` |
+| Push dashboard config | `ha_config_set_dashboard` | `dashboard_path`, `config` |
+| Read config file | `ha_read_file` | `path` (requires ha_mcp_tools) |
+| Edit YAML config | `ha_config_set_yaml` | `path`, `content` (requires ha_mcp_tools) |
+| Entity registry query | `ha_get_entity_registry` | `domain`, `area_id` |
+| Area registry query | `ha_get_area_registry` | — |
+| Call Watchman report | `call_service` | `domain: watchman`, `service: report` |
