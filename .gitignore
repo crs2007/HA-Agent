@@ -3,12 +3,22 @@
 *.token
 secrets.yaml
 
-# HA config entries (contains OAuth tokens)
-_bmad/bmm/knowledge/inventory/raw/core.config_entries
+# HA raw inventory snapshots (point-in-time exports — may contain tokens, PII, device IPs)
+_bmad/bmm/knowledge/inventory/raw/
+
+# Log files (contain internal IPs, node/container names)
+*.log
+
+# Playwright MCP session artifacts (HA URLs, auth errors)
+.playwright-mcp/
+
+# Generated task artifacts (device IPs, entity IDs, PII)
+_bmad/bmm/tasks/
 
 # Local Claude settings with tokens
 .claude/settings.json
 .claude/settings.local.json
+.claude/ha-mcp-audit.log
 .mcp.json
 
 # Node
@@ -36,3 +46,4 @@ desktop.ini
 # IDE
 .vscode/
 .idea/
+tools/_scratch/
