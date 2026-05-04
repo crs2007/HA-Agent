@@ -61,3 +61,52 @@ For each NEW **critical, high, or medium** finding:
   ```
   HANDOFF → ha-developer: {N} watchman PRs ready for implementation (X critical, Y high, Z medium) + {M} low-severity issues
   ```
+
+---
+
+## Automation Error Workflow (for [AE] menu item)
+
+### AE-1. Scan HA Log via SSH
+- [ ] SSH to HA host: `grep -E "(ERROR|WARNING).*(automat|script)" /config/home-assistant.log | tail -300`
+- [ ] Also run: `grep -E "Error executing script|action at position|Template.*error" /config/home-assistant.log | tail -100`
+- [ ] If log is empty or unavailable, try `/homeassistant/home-assistant.log`
+
+### AE-2. Parse Results
+- [ ] Extract: automation/script ID, error message, timestamp, occurrence count
+- [ ] Group errors by automation ID (deduplicate repeated failures)
+- [ ] Note the most recent timestamp per automation
+
+### AE-3. Fetch Trace Detail (for each erroring automation)
+- [ ] SSH → REST API: `curl -s -H "Authorization: Bearer <HASS_TOKEN>" http://localhost:8123/api/trace/automation/<automation_id>`
+- [ ] Extract failed step: action index, condition that failed, service that errored, exception text
+- [ ] Note automation `state` (enabled/disabled) from: `curl -s -H "Authorization: Bearer <HASS_TOKEN>" http://localhost:8123/api/states/automation.<name>`
+
+### AE-4. Categorize by Severity
+- [ ] **Critical**: ≥3 failures in last 24h, automation still enabled
+- [ ] **High**: 1–2 failures in last 24h, automation still enabled
+- [ ] **Medium**: failures >24h but ≤7 days ago, automation still enabled
+- [ ] **Low**: automation is disabled, or last failure >7 days ago
+
+### AE-5. Check Existing GitHub Issues AND PRs
+- [ ] Run `gh issue list --repo {ha_config_repo} --label automation-error`
+- [ ] Run `gh pr list --repo {ha_config_repo} --label automation-error --state open`
+- [ ] Skip creating duplicates; note items that may be resolved
+
+### AE-6a. Create GitHub Issues (low/medium severity)
+For each NEW low or medium finding:
+- [ ] Title format: `[runtime-error] {automation_id} — {brief description}`
+- [ ] Body: automation ID, error message, last seen timestamp, failed step/action, suggested fix
+- [ ] Labels: `automation-error` + `severity:{level}` + `agent:reviver`
+
+### AE-6b. Create GitHub PRs (critical/high severity)
+For each NEW critical or high finding:
+- [ ] Follow `_bmad/bmm/checklists/pr-creation-workflow.md`
+- [ ] Labels: `automation-error` + `severity:{level}` + `agent:reviver` + `status:needs-implementation`
+- [ ] Group related failures (e.g., same root-cause entity) into a single batch PR
+
+### AE-7. Generate Summary & HANDOFF
+- [ ] Present findings in table: automation ID | severity | error snippet | last seen | occurrences
+- [ ] Output HANDOFF note if Developer action needed:
+  ```
+  HANDOFF → ha-developer: {N} automation-error PRs ready for implementation (X critical, Y high) + {M} issues (medium/low)
+  ```

@@ -42,6 +42,7 @@ You must fully embody this agent's persona and follow all activation instruction
       <r>ALWAYS communicate in {communication_language} UNLESS contradicted by communication_style.</r>
       <r>Stay in character until exit selected</r>
       <r>Display Menu items as the item dictates and in the order given.</r>
+      <r>⛔ BEFORE EDITING ANY lovelace.dashboard_* FILE: Pull the current version from the live HA instance using tools/pull_dashboard.js (or read live config via MCP WebSocket). The local file is a stale snapshot — Sharon edits dashboards directly in HA UI. Editing the snapshot without pulling first will silently destroy her recent changes. This has happened.</r>
       <r>ALWAYS read current dashboard state via MCP before proposing changes</r>
       <r>ALWAYS show YAML diff before applying any dashboard changes</r>
       <r>NEVER apply changes without explicit user confirmation</r>

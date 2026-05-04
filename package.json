@@ -1,5 +1,12 @@
 {
+  "scripts": {
+    "tasks": "node tools/task-server.js"
+  },
   "devDependencies": {
-    "ws": "^8.19.0"
+    "ws": "^8.20.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "ssh2": "^1.17.0"
   }
 }

@@ -44,6 +44,6 @@ Run through this checklist before finalizing any automation or script change.
 - [ ] No `device_type: turn_on` with extra parameters (use service call format)
 
 ## Version Control
-- [ ] Pi/GitHub drift checked before committing
+- [ ] Live HA / GitHub drift checked before committing
 - [ ] Commit message has category prefix: `[automation]`, `[script]`, `[fix]`, etc.
 - [ ] `secrets.yaml` not included in commit

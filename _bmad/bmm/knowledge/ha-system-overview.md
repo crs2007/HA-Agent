@@ -1,7 +1,7 @@
 # Home Assistant System Overview
 
 ## System
-- **Platform:** Home Assistant OS on Raspberry Pi 4
+- **Platform:** Home Assistant OS on Proxmox VM 102 (node `HOME-LAB`, 2 vCPU / 12 GB RAM). Migrated from RPi4 on 2026-04-16.
 - **Location:** Hod HaSharon, Israel
 - **Coordinates:** 32.164358, 34.903672
 - **Timezone:** Asia/Jerusalem
@@ -12,7 +12,9 @@
 - **Windows Desktop:** NVIDIA GTX 1080 Ti, Docker host
   - Frigate (object detection) at http://192.168.68.246:5000
   - Doubletake (face recognition)
-  - Ollama (llama3.2-vision:11b — LLM fallback)
+- **Proxmox LXC 103 (ollama):** Ubuntu container at http://192.168.68.106:11434
+  - Ollama (llama3.2-vision:11b — LLM fallback for doorbell image description)
+  - Intel iGPU passthrough enabled (renderD128, card1)
 
 ## Family
 | Person | Entity | Mobile Notify | Role |

@@ -3,7 +3,7 @@
 **Version:** 2026.03.23.0
 **Release Date:** 2026-03-23
 
-> **Repo:** [crs2007/HA-Agent](https://github.com/crs2007/HA-Agent) · **HA Config:** local only (Pi is source of truth, no GitHub mirror yet)
+> **Repo:** [crs2007/HA-Agent](https://github.com/crs2007/HA-Agent) · **HA Config:** local only (live HA instance is source of truth, no GitHub mirror yet)
 
 A [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) project with four specialized AI agents for managing a Home Assistant smart home system via Claude Code.
 
@@ -11,7 +11,7 @@ A [BMAD-METHOD](https://github.com/bmadcode/BMAD-METHOD) project with four speci
 
 This repo contains the Claude Code configuration, skills, and knowledge base for AI-assisted Home Assistant management. The agents can read live HA state, control devices, manage automations, and keep the config repo in sync — all through MCP-connected tools.
 
-**HA Instance:** Raspberry Pi 4 running Home Assistant OS
+**HA Instance:** Home Assistant OS on Proxmox VM 102 (node `HOME-LAB`) — migrated from RPi4 on 2026-04-16
 **Scale:** 121 automations · 104 scripts · 2,600+ entities · 14 areas
 **Location:** Hod HaSharon, Israel
 
@@ -54,12 +54,12 @@ Then invoke an agent:
 - `/ha-dashboard-designer` — to design or update dashboards
 - `/ha-reviver` — to run a health check / Watchman audit
 
-## Git Workflow — Pi-First Strategy
+## Git Workflow — Live-Instance-First Strategy
 
-The Raspberry Pi is the source of truth. GitHub is a mirror.
+The live HA instance is the source of truth. GitHub is a mirror.
 
-1. Before any config change, compare local repo with live Pi config via MCP
-2. Sharon may edit directly on the Pi (HA UI / File Editor add-on) — always check for drift
+1. Before any config change, compare local repo with the live HA config via MCP
+2. Sharon may edit directly in HA (UI / File Editor add-on) — always check for drift
 3. After changes: commit locally (no GitHub remote yet — push when repo is created)
 
 **Commit prefixes:** `[automation]` · `[script]` · `[fix]` · `[dashboard]` · `[config]`

@@ -303,7 +303,7 @@
 |-------|----------|--------|-------|--------:|
 | Google Gemini | `01JR0PWHE6PTK7NQJ7Y8HBYMYG` | user | enabled | 4 |
 | LLM Vision Settings | `01KBAAS6SQDDBF9QCD6F8WKN7Z` | user | enabled | 4 |
-| Ollama (192.168.68.246) | `01KCVTZRQH64TCRD6ZC5CYQ8EX` | user | enabled | 4 |
+| Ollama (192.168.68.106) | `01KCVTZRQH64TCRD6ZC5CYQ8EX` | user | enabled | 4 |
 
 ## local_ip (1 entry)
 
@@ -369,7 +369,7 @@
 
 | Title | Entry ID | Source | State | Version |
 |-------|----------|--------|-------|--------:|
-| http://192.168.68.246:11434 | `01KCVTYM0JYTRCBM46VRZSKA2A` | user | enabled | 3 |
+| http://192.168.68.106:11434 | `01KCVTYM0JYTRCBM46VRZSKA2A` | user | enabled | 3 |
 
 ## oref_alert (1 entry)
 

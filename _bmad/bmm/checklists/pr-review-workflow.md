@@ -45,9 +45,9 @@ For each changed YAML file, verify against `automation-review.md`:
 - [ ] Verify the fix doesn't break other automations, scripts, or dashboards that reference the same entities
 - [ ] Check if any removed references are still needed elsewhere
 
-## 7. Verify Pi-First Compliance
+## 7. Verify Live-Instance-First Compliance
 
-- [ ] Confirm the Developer compared with live Pi state before making changes
+- [ ] Confirm the Developer compared with the live HA state before making changes
 - [ ] Check that no secrets.yaml, .storage/, or other excluded files are in the diff
 
 ## 8. Post Review

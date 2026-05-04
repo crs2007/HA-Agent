@@ -1,52 +1,100 @@
-# HA Agent — BMAD Multi-Agent System for Home Assistant
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
 This is a BMAD-METHOD project with four specialized AI agents for managing Sharon's Home Assistant system.
 
 - **HA Instance:** http://homeassistant.local:8123/
-- **Platform:** Home Assistant OS on Raspberry Pi 4
+- **Platform:** Home Assistant OS on Proxmox VM 102 (node `HOME-LAB`, 2 vCPU / 12 GB RAM). Migrated from RPi4 on 2026-04-16.
 - **Location:** Hod HaSharon, Israel | Timezone: Asia/Jerusalem
 - **Scale:** 121 automations, 104 scripts, 2,600+ entities, 14 areas
-- **HA Config Local:** `E:\GitHub\Home-Assistant_Config` (no GitHub mirror yet — Pi is sole source of truth)
+- **HA Config Local:** `E:\GitHub\Home-Assistant_Config` (no GitHub mirror yet — the live HA instance is sole source of truth)
 
 ## BMAD Agents
 
-Four custom HA agents are available alongside the standard BMAD agents:
+Four custom HA agents, plus standard BMAD agents (`/bmad-help`, `/bmad-dev`, `/bmad-architect`, etc.):
 
-| Agent | Invoke | Persona | Purpose |
-|-------|--------|---------|---------|
-| Dashboard Designer | `/ha-dashboard-designer` | Noa | Design & maintain Lovelace dashboards, Mushroom cards, Hebrew RTL layouts |
-| Developer | `/ha-developer` | Dev | Build automations, scripts, fix bugs, manage version control, work watchman PRs |
-| Reviver | `/ha-reviver` | Watch | Run Watchman reports, create GitHub Issues/PRs, health monitoring |
-| Reviewer | `/ha-reviewer` | Quinn-HA | Review watchman PRs, validate config changes, approve/reject |
+| Agent | Invoke | Persona | Model | Purpose |
+|-------|--------|---------|-------|---------|
+| Dashboard Designer | `/ha-dashboard-designer` | Noa | Sonnet | Design & maintain Lovelace dashboards, Mushroom cards, Hebrew RTL layouts |
+| Developer | `/ha-developer` | Dev | Sonnet | Build automations, scripts, fix bugs, manage version control, work watchman PRs |
+| Reviver | `/ha-reviver` | Watch | Sonnet | Run Watchman reports, create GitHub Issues/PRs, health monitoring |
+| Reviewer | `/ha-reviewer` | Quinn-HA | Opus | Review watchman PRs, validate config changes, approve/reject |
 
-Standard BMAD agents (`/bmad-help`, `/bmad-dev`, `/bmad-architect`, etc.) are also available.
+> **Model selection:** Set the session model with `/model sonnet` or `/model opus` before invoking an agent.
+
+## Architecture
+
+### Agent Activation Flow
+
+Every agent follows the same mandatory activation sequence (defined in `_bmad/bmm/agents/{agent}.md`):
+
+1. Load config from `_bmad/bmm/config.yaml` — stores `{user_name}`, `{communication_language}`, `{ha_config_repo}`, `{ha_config_local}` as session variables
+2. Load agent-specific knowledge files from `_bmad/bmm/knowledge/`
+3. Connect to Home Assistant via MCP
+4. Display greeting and numbered menu
+5. Wait for user input (never auto-execute)
+
+Variables like `{ha_config_repo}`, `{project-root}`, `{user_name}` are resolved from `config.yaml` at activation time. Agent definitions, checklists, and templates all use these variables.
+
+### Key Directories
+
+| Path | Purpose |
+|------|---------|
+| `_bmad/bmm/agents/` | Agent persona definitions (XML-in-markdown, menu items, rules) |
+| `_bmad/bmm/knowledge/` | Domain knowledge loaded at activation (coding conventions, dashboard rules, system overview) |
+| `_bmad/bmm/knowledge/inventory/` | Full HA inventory snapshots (areas, automations, scripts, devices, entities) |
+| `_bmad/bmm/checklists/` | Step-by-step workflows (automation-review, reviver-workflow, PR creation/review) |
+| `_bmad/bmm/templates/` | YAML/markdown templates for automations, scripts, issues, PRs |
+| `.claude/skills/ha-*/SKILL.md` | Thin skill wrappers that load agent definitions from `_bmad/bmm/agents/` |
+| `_bmad/bmm/config.yaml` | Central config — agent variables, HA connection details, user preferences |
+
+### Agent ↔ Knowledge Mapping
+
+- **Developer** loads: `ha-coding-conventions.md`, `ha-system-overview.md`
+- **Dashboard Designer** loads: `ha-dashboard-rules.md`, `ha-system-overview.md`, `ha-hebrew-labels.md`
+- **Reviver** loads: `ha-system-overview.md`, `reviver-workflow.md`
+- **Reviewer** loads: `ha-coding-conventions.md`, `ha-system-overview.md`, `automation-review.md`, `pr-review-workflow.md`
 
 ## MCP Connection
 
 Two MCP servers connect agents to Home Assistant:
-- **ha-mcp** (primary): Rich toolset (~96 tools) for entity states, service calls, dashboard CRUD, automation management
+- **ha-mcp** (primary): ~96 tools for entity states, service calls, dashboard CRUD, automation management
 - **homeassistant** (fallback): HA native MCP for Assist pipeline tools
+- **proxmox** (stdio): Proxmox VE management at 192.168.68.180:8006 — VM/LXC lifecycle, snapshots, storage
 
 The `HASS_TOKEN` environment variable must be set before launching Claude Code.
 
-## Git Workflow — Pi-First Strategy
+## Git Workflow — Live-Instance-First Strategy
 
-**The Raspberry Pi is the source of truth.** The GitHub repo is a mirror.
+**The live HA instance is the source of truth.** No GitHub mirror exists yet.
 
-1. **Before any config change:** Compare local repo with live Pi config (via MCP). If they differ, ask Sharon which version to keep.
-2. **Sharon may edit directly on the Pi** via HA UI or File Editor add-on. Always check for drift.
-3. **After changes:** Commit locally (no GitHub remote yet — push when repo is created)
-4. **Commit prefixes:** `[automation]`, `[script]`, `[fix]`, `[dashboard]`, `[config]`
+> ### ⛔ CRITICAL — READ BEFORE ANY DASHBOARD OR CONFIG CHANGE
+>
+> The files in `_bmad/bmm/knowledge/inventory/raw/` (especially `lovelace.dashboard_*`) are **point-in-time snapshots**. They are NOT live. Sharon edits HA directly via the UI — the local snapshot can be weeks behind.
+>
+> **BEFORE editing any `lovelace.dashboard_*` file you MUST:**
+> 1. Pull the current version from the live HA instance via the `tools/pull_dashboard.js` tool (or read live config via MCP)
+> 2. Overwrite the local snapshot with the live version
+> 3. THEN apply your changes
+> 4. THEN push back with `tools/push_dashboard.js`
+>
+> **Skipping step 1 will silently overwrite Sharon's recent changes.** This has happened — do not repeat it.
+
+1. **Before any config change:** Compare local repo with the live HA config (via MCP). If they differ, ask Sharon which version to keep.
+2. **Sharon may edit directly in HA** via the UI or File Editor add-on. Always check for drift.
+3. **After changes:** Commit locally (push when a GitHub remote is created)
+4. **Commit prefixes:** `[automation]`, `[script]`, `[fix]`, `[dashboard]`, `[config]`, `[agents]`, `[docs]`
 5. **Never commit:** `secrets.yaml`, `.storage/`, `home-assistant_v2.db`
 
 ## Cross-Agent Handoff — PR-Driven Pipeline
 
-Agents don't call each other directly. Sharon orchestrates. The primary workflow uses GitHub PRs:
+Agents don't call each other directly. Sharon orchestrates. The primary workflow uses GitHub PRs (once `ha_config_repo` is configured in `config.yaml`):
 
 ### Watchman PR Pipeline
-1. **Reviver** runs Watchman report → creates **draft PRs** (critical/high/medium) or **Issues** (low) on the HA config repo (when GitHub mirror is set up)
+1. **Reviver** runs Watchman report → creates **draft PRs** (critical/high/medium) or **Issues** (low)
 2. **Developer** picks up a draft PR (`[WP]` menu) → implements the fix → marks ready for review
 3. **Reviewer** reviews the PR (`[RP]` menu) → validates via MCP + automation checklist → approves or requests changes
 4. **Sharon** merges approved PRs
@@ -59,10 +107,7 @@ Agents don't call each other directly. Sharon orchestrates. The primary workflow
 
 ### Other Handoffs
 - **Developer** creates/modifies entities → **Dashboard Designer** updates cards
-- When one agent identifies work for another, output a handoff note:
-  ```
-  HANDOFF → [target-agent]: [task description]
-  ```
+- Handoff note format: `HANDOFF → [target-agent]: [task description]`
 
 ## Key Conventions
 

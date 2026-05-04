@@ -31,8 +31,8 @@ Describe what breaks or degrades when this entity is missing/unavailable.
 
 ## Developer Checklist
 
-- [ ] Fetch branch to local clone and pull latest from Pi
-- [ ] Compare live Pi config with branch via MCP
+- [ ] Fetch branch to local clone and pull latest from the live HA instance
+- [ ] Compare live HA config with branch via MCP
 - [ ] Implement fix following HA coding conventions
 - [ ] Run config validation via MCP
 - [ ] Delete `_watchman-fix.md` from branch
