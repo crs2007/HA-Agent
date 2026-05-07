@@ -45,3 +45,8 @@ custom_agents:
     title: HA PR Reviewer
     model: opus
     file: "{project-root}/_bmad/bmm/agents/ha-reviewer.md"
+  - name: ha-task-manager
+    displayName: Tix
+    title: BMAD Pipeline Task Manager
+    model: sonnet
+    file: "{project-root}/_bmad/bmm/agents/ha-task-manager.md"
