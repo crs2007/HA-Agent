@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HA Task Board</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --header-h: 57px;
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+
+    --critical: #ef4444;
+    --critical-bg: rgba(239,68,68,0.12);
+    --high: #f97316;
+    --high-bg: rgba(249,115,22,0.12);
+    --medium: #eab308;
+    --medium-bg: rgba(234,179,8,0.12);
+    --low: #3b82f6;
+    --low-bg: rgba(59,130,246,0.12);
+
+    --open: #64748b;
+    --open-bg: rgba(100,116,139,0.15);
+    --inprogress: #6366f1;
+    --inprogress-bg: rgba(99,102,241,0.15);
+    --planned: #a78bfa;
+    --planned-bg: rgba(167,139,250,0.15);
+    --done: #22c55e;
+    --done-bg: rgba(34,197,94,0.15);
+    --dismissed: #475569;
+    --dismissed-bg: rgba(71,85,105,0.12);
+    --ignored: #6b7280;
+    --ignored-bg: rgba(107,114,128,0.12);
+    --archived: #9333ea;
+    --archived-bg: rgba(147,51,234,0.12);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .header h1 span { font-size: 20px; }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .stat-chip.critical { color: var(--critical); border-color: var(--critical); background: var(--critical-bg); }
+  .stat-chip.high     { color: var(--high);     border-color: var(--high);     background: var(--high-bg); }
+  .stat-chip.medium   { color: var(--medium);   border-color: var(--medium);   background: var(--medium-bg); }
+  .stat-chip.low      { color: var(--low);       border-color: var(--low);       background: var(--low-bg); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    padding: 12px 24px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar-group { display: flex; gap: 8px; align-items: center; }
+  select, input[type="text"], input[type="search"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+  #search { width: 220px; }
+  .spacer { flex: 1; }
+  .btn {
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger  { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+
+  /* ── Table ── */
+  .table-wrap {
+    overflow-x: auto;
+    padding: 0 24px 24px;
+    margin-top: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    min-width: 1100px;
+  }
+  thead th {
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th.sortable { cursor: pointer; }
+  thead th.sortable:hover { color: var(--text); }
+  thead th .sort-icon { opacity: 0.4; margin-left: 4px; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody tr.status-done { opacity: 0.45; }
+  tbody tr.status-dismissed { opacity: 0.3; }
+  tbody tr.status-ignored   { opacity: 0.35; }
+
+  td {
+    padding: 10px 12px;
+    vertical-align: top;
+  }
+  .td-id { font-size: 11px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+  .td-title { max-width: 260px; }
+  .td-title .title-text {
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .td-title .title-text:hover { color: var(--accent-hover); text-decoration: underline; }
+  .td-title .source {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+  }
+  .td-count { text-align: right; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .td-count.high-count { color: var(--high); font-weight: 700; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .badge.critical { color: var(--critical); background: var(--critical-bg); }
+  .badge.high     { color: var(--high);     background: var(--high-bg); }
+  .badge.medium   { color: var(--medium);   background: var(--medium-bg); }
+  .badge.low      { color: var(--low);       background: var(--low-bg); }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  /* ── Inline selects (status / agent / model) ── */
+  .inline-select {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    max-width: 150px;
+  }
+  .inline-select:hover, .inline-select:focus { border-color: var(--border); background: var(--surface2); }
+
+  .inline-select.status-open       { color: var(--open);       background: var(--open-bg); }
+  .inline-select.status-in-progress{ color: var(--inprogress); background: var(--inprogress-bg); }
+  .inline-select.status-planned    { color: var(--planned);    background: var(--planned-bg); }
+  .inline-select.status-done       { color: var(--done);       background: var(--done-bg); }
+  .inline-select.status-dismissed  { color: var(--dismissed);  background: var(--dismissed-bg); }
+  .inline-select.status-ignored    { color: var(--ignored);    background: var(--ignored-bg); }
+
+  .inline-select.severity-critical { color: var(--critical); background: var(--critical-bg); }
+  .inline-select.severity-high     { color: var(--high);     background: var(--high-bg); }
+  .inline-select.severity-medium   { color: var(--medium);   background: var(--medium-bg); }
+  .inline-select.severity-low      { color: var(--low);      background: var(--low-bg); }
+
+  /* ── Plan cell ── */
+  .plan-cell { min-width: 180px; max-width: 260px; }
+  .plan-preview {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    min-height: 28px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .plan-preview:hover { border-color: var(--border); background: var(--surface2); color: var(--text); }
+  .plan-preview.empty::before { content: '+ Add plan…'; font-style: italic; opacity: 0.4; }
+  .plan-textarea {
+    width: 100%;
+    min-height: 80px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    border-radius: 5px;
+    padding: 6px 8px;
+    font-size: 12px;
+    resize: vertical;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* ── Actions ── */
+  .actions { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 5px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.danger:hover { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
+
+  .prompt-btn {
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-align: center;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+  }
+  .prompt-btn + .prompt-btn { margin-top: 4px; }
+  .prompt-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .prompt-btn.run { color: var(--done); border-color: rgba(34,197,94,0.4); background: var(--done-bg); }
+  .prompt-btn.run:hover:not(:disabled) { background: var(--done); color: #fff; border-color: var(--done); }
+  .prompt-btn.review { color: var(--planned); border-color: rgba(167,139,250,0.4); background: var(--planned-bg); }
+  .prompt-btn.review:hover:not(:disabled) { background: var(--planned); color: #fff; border-color: var(--planned); }
+  .prompt-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── Review modal ── */
+  .modal.modal-review { max-width: 920px; }
+  .review-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+  .review-meta b { color: var(--text); }
+  .review-plan-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Consolas','Monaco',monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    max-height: 160px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    margin-bottom: 16px;
+  }
+  .review-result {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .review-result.notes      { border-color: rgba(99,102,241,0.5); }
+  .review-result.alternative { border-color: rgba(167,139,250,0.5); }
+
+  /* Inline review badge shown above the plan preview */
+  .review-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border: 1px solid;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .review-pill.notes       { color: var(--accent);  border-color: rgba(99,102,241,0.5);  background: rgba(99,102,241,0.12); }
+  .review-pill.alternative { color: var(--planned); border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.15); }
+  .review-pill:hover { filter: brightness(1.25); }
+
+  /* Review block inside the expanded detail row */
+  .detail-review {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .detail-review-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .detail-review-meta b { color: var(--text); }
+  .detail-review-body {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: 'Consolas','Monaco',monospace;
+  }
+  .detail-review-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+  }
+  .detail-link {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .detail-link:hover { background: rgba(99,102,241,0.12); }
+  .review-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .review-status { color: var(--text-muted); font-size: 13px; padding: 24px 0; text-align: center; }
+
+  /* ── Side-by-side line diff ── */
+  .diff-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .diff-col {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+  .diff-col h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .diff-line {
+    padding: 2px 12px;
+    font-family: 'Consolas','Monaco',monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 18px;
+  }
+  .diff-line.add    { background: rgba(34,197,94,0.15); color: #d4f5dc; }
+  .diff-line.remove { background: rgba(239,68,68,0.18); color: #fcd4d4; }
+  .diff-line.same   { color: var(--text-muted); }
+  .diff-line.empty  { background: rgba(255,255,255,0.02); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.hidden { display: none; }
+  .hidden { display: none; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 16px; margin-bottom: 20px; font-weight: 700; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-full { grid-column: 1 / -1; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 300;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: var(--done); }
+  .toast.error   { border-color: var(--critical); }
+
+  /* ── Detail panel (right-click expand) ── */
+  .detail-row td {
+    padding: 0 12px;
+    background: rgba(99,102,241,0.04);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-inner {
+    padding: 12px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 900px;
+    line-height: 1.6;
+  }
+  .detail-inner strong { color: var(--text); }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 90;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-bottom: -2px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  tbody tr.status-archived { opacity: 0.55; }
+  .inline-select.status-archived { color: var(--archived); background: var(--archived-bg); }
+  .icon-btn.restore:hover { background: rgba(99,102,241,0.15); color: var(--accent); border-color: var(--accent); }
+
+  /* ── Mobile card list (hidden on desktop) ── */
+  .card-list { display: none; flex-direction: column; gap: 8px; padding: 12px; }
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .card-id { font-size: 11px; color: var(--text-muted); font-weight: 700; margin-left: auto; }
+  .card-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 8px;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .card-title:hover { color: var(--accent-hover); }
+  .card-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .card-actions .prompt-btn { flex: 1; min-width: 80px; }
+  .card-actions .icon-btn { padding: 5px 10px; }
+  .card-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: none;
+  }
+  .card-detail.open { display: block; }
+  .card-detail strong { color: var(--text); }
+  .card-plan-text {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-top: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* ── Responsive: vertical / portrait screens ── */
+  @media (max-width: 1099px) {
+    .header { padding: 12px 16px; gap: 12px; }
+    .stats { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+
+    .tab-bar { padding: 0 12px; }
+    .tab-btn { padding: 10px 14px; font-size: 13px; }
+
+    .toolbar {
+      padding: 10px 12px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .toolbar-group { flex-wrap: wrap; gap: 6px; }
+    .toolbar-group select { flex: 1 1 calc(50% - 3px); min-width: 0; }
+    #search { width: 100%; flex: 1 1 100%; }
+    .spacer { display: none; }
+    .toolbar-group:last-child { justify-content: stretch; }
+    .toolbar-group:last-child .btn { flex: 1; text-align: center; }
+
+    .table-wrap { display: none; }
+    .card-list { display: flex; }
+
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal {
+      border-radius: 16px 16px 0 0;
+      max-height: 92vh;
+      padding: 20px 16px;
+    }
+    .modal.modal-review { max-width: 100%; }
+    .form-grid { grid-template-columns: 1fr; }
+    .diff-wrap { grid-template-columns: 1fr; }
+
+    .toast { right: 12px; left: 12px; bottom: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1><span>🏠</span> HA Task Board</h1>
+  <div class="stats" id="stats"></div>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-board" onclick="switchTab('board')">📋 Board</button>
+  <button class="tab-btn" id="tab-archive" onclick="switchTab('archive')">📦 Archive</button>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-group">
+    <select id="f-severity">
+      <option value="">All Severities</option>
+      <option value="critical">Critical</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <select id="f-status">
+      <option value="">All Statuses</option>
+      <option value="open">Open</option>
+      <option value="in-progress">In Progress</option>
+      <option value="planned">Planned</option>
+      <option value="done">Done</option>
+      <option value="dismissed">Dismissed</option>
+      <option value="ignored">Ignored</option>
+      <option value="archived">Archived</option>
+    </select>
+    <select id="f-agent">
+      <option value="">All Agents</option>
+      <option value="unassigned">Unassigned</option>
+      <option value="ha-developer">Developer</option>
+      <option value="ha-reviver">Reviver</option>
+      <option value="ha-reviewer">Reviewer</option>
+      <option value="ha-dashboard-designer">Dashboard Designer</option>
+    </select>
+    <input type="search" id="search" placeholder="Search tasks…">
+  </div>
+  <div class="spacer"></div>
+  <div class="toolbar-group">
+    <button class="btn btn-primary" id="btn-add">+ Add Task</button>
+    <button class="btn btn-ghost" id="btn-export">Export JSON</button>
+    <label class="btn btn-ghost" style="cursor:pointer">
+      Import JSON
+      <input type="file" id="file-import" accept=".json" style="display:none">
+    </label>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table id="task-table">
+    <thead>
+      <tr>
+        <th class="sortable" data-col="id">ID <span class="sort-icon">↕</span></th>
+        <th>Title / Source</th>
+        <th class="sortable" data-col="severity">Severity <span class="sort-icon">↕</span></th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Agent</th>
+        <th>Model</th>
+        <th class="plan-cell">Plan</th>
+        <th class="sortable" data-col="log_count">Log Count <span class="sort-icon">↕</span></th>
+        <th>Prompts</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="task-body"></tbody>
+  </table>
+  <div class="empty-state hidden" id="empty-state">
+    <div class="icon">📋</div>
+    <div>No tasks match your filters.</div>
+  </div>
+</div>
+
+<!-- Mobile card list (shown via CSS on narrow/portrait screens) -->
+<div class="card-list" id="card-list"></div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-title">Add Task</h2>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label>Title</label>
+        <input type="text" id="m-title" placeholder="Short description">
+      </div>
+      <div class="form-group form-full">
+        <label>Description</label>
+        <textarea id="m-description" placeholder="Full details from logs or investigation…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Severity</label>
+        <select id="m-severity">
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="m-category">
+          <option value="automation">Automation</option>
+          <option value="script">Script</option>
+          <option value="integration">Integration</option>
+          <option value="connectivity">Connectivity</option>
+          <option value="template">Template</option>
+          <option value="dashboard">Dashboard</option>
+          <option value="security">Security</option>
+          <option value="hacs">HACS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="m-status">
+          <option value="open" selected>Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="planned">Planned</option>
+          <option value="done">Done</option>
+          <option value="dismissed">Dismissed</option>
+          <option value="ignored">Ignored</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Log Count</label>
+        <input type="text" id="m-log_count" placeholder="0" value="0">
+      </div>
+      <div class="form-group">
+        <label>Agent</label>
+        <select id="m-agent">
+          <option value="unassigned" selected>Unassigned</option>
+          <option value="ha-developer">Developer</option>
+          <option value="ha-reviver">Reviver</option>
+          <option value="ha-reviewer">Reviewer</option>
+          <option value="ha-dashboard-designer">Dashboard Designer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Model</label>
+        <select id="m-model">
+          <option value="unassigned" selected>Unassigned</option>
+          <option value="sonnet">Sonnet</option>
+          <option value="opus">Opus</option>
+          <option value="haiku">Haiku</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label>Source</label>
+        <input type="text" id="m-source" placeholder="HA log source name">
+      </div>
+      <div class="form-group form-full">
+        <label>Plan</label>
+        <textarea id="m-plan" placeholder="Agent's fix plan…"></textarea>
+      </div>
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea id="m-notes" placeholder="Additional notes…" style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review Plan Modal — view-only, shown when a saved review exists -->
+<div class="modal-overlay hidden" id="review-overlay">
+  <div class="modal modal-review">
+    <h2 id="review-title">Plan Review</h2>
+    <div class="review-meta" id="review-meta"></div>
+
+    <!-- Notes mode -->
+    <div id="review-notes" class="hidden">
+      <div class="review-meta" id="review-notes-meta"></div>
+      <div class="review-result notes" id="review-notes-content"></div>
+    </div>
+
+    <!-- Alternative mode — side-by-side diff -->
+    <div id="review-alt" class="hidden">
+      <div class="review-meta" id="review-alt-meta"></div>
+      <div class="diff-wrap">
+        <div class="diff-col">
+          <h4>Current plan</h4>
+          <div id="diff-current"></div>
+        </div>
+        <div class="diff-col">
+          <h4>Proposed alternative</h4>
+          <div id="diff-proposed"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost"   id="review-close">Close</button>
+      <button class="btn btn-ghost"   id="review-redo" title="Copy a fresh review prompt to the clipboard">🔄 Re-review</button>
+      <button class="btn btn-primary" id="review-apply" style="display:none">Apply alternative plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/tasks';
+let tasks = [];
+let sortCol = 'severity';
+let sortDir = 1;
+let editingId = null;
+let expandedId = null;
+let activeTab = 'board';
+
+const BOARD_STATUSES   = new Set(['open', 'in-progress', 'planned']);
+const ARCHIVE_STATUSES = new Set(['done', 'ignored', 'dismissed', 'archived']);
+
+const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+const CAT_ICONS = {
+  automation: '⚙️', script: '📜', integration: '🔌', connectivity: '📡',
+  template: '🧩', dashboard: '🖥️', security: '🔒', hacs: '📦'
+};
+const AGENT_LABELS = {
+  unassigned: '—', 'ha-developer': 'Developer', 'ha-reviver': 'Reviver',
+  'ha-reviewer': 'Reviewer', 'ha-dashboard-designer': 'Designer'
+};
+
+async function load() {
+  try {
+    const r = await fetch(API);
+    tasks = await r.json();
+    render();
+  } catch (e) {
+    showToast('Failed to load tasks: ' + e.message, 'error');
+  }
+}
+
+async function patch(id, data) {
+  const r = await fetch(`${API}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  const updated = await r.json();
+  const idx = tasks.findIndex(t => t.id === id);
+  if (idx !== -1) tasks[idx] = updated;
+  return updated;
+}
+
+async function create(data) {
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function remove(id) {
+  const r = await fetch(`${API}/${id}`, { method: 'DELETE' });
+  if (!r.ok) throw new Error(await r.text());
+  tasks = tasks.filter(t => t.id !== id);
+}
+
+function filtered() {
+  const sv = document.getElementById('f-severity').value;
+  const st = document.getElementById('f-status').value;
+  const ag = document.getElementById('f-agent').value;
+  const q  = document.getElementById('search').value.toLowerCase();
+  return tasks.filter(t => {
+    if (activeTab === 'board'   && !BOARD_STATUSES.has(t.status))   return false;
+    if (activeTab === 'archive' && !ARCHIVE_STATUSES.has(t.status)) return false;
+    if (sv && t.severity !== sv) return false;
+    if (st && t.status !== st) return false;
+    if (ag && t.agent !== ag) return false;
+    if (q && !t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function sorted(arr) {
+  return [...arr].sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'severity') { va = SEVERITY_ORDER[va] ?? 99; vb = SEVERITY_ORDER[vb] ?? 99; }
+    if (sortCol === 'log_count') { va = Number(va); vb = Number(vb); }
+    if (typeof va === 'string') return va.localeCompare(vb) * sortDir;
+    return (va - vb) * sortDir;
+  });
+}
+
+function renderStats() {
+  const active = tasks.filter(t => BOARD_STATUSES.has(t.status));
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  active.forEach(t => { if (counts[t.severity] !== undefined) counts[t.severity]++; });
+  const el = document.getElementById('stats');
+  el.innerHTML = Object.entries(counts).map(([s, c]) =>
+    `<div class="stat-chip ${s}"><div class="dot"></div>${c} ${s}</div>`
+  ).join('');
+}
+
+function render() {
+  renderStats();
+  const list = sorted(filtered());
+  const tbody = document.getElementById('task-body');
+  const empty = document.getElementById('empty-state');
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  tbody.innerHTML = list.map(t => {
+    const statusClass = t.status.replace(/\s+/g, '-');
+    const countHigh = t.log_count > 500;
+    const planEmpty = !t.plan || t.plan.trim() === '';
+    return `
+    <tr class="status-${statusClass}" data-id="${t.id}">
+      <td class="td-id">${t.id}</td>
+      <td class="td-title">
+        <div class="title-text" title="${esc(t.title)}" onclick="toggleDetail('${t.id}')">${esc(t.title)}</div>
+        <div class="source">${esc(t.source)}</div>
+      </td>
+      <td>
+        <select class="inline-select severity-${t.severity}" onchange="onFieldChange('${t.id}', 'severity', this.value)">
+          ${['critical','high','medium','low'].map(s =>
+            `<option value="${s}"${t.severity===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="cat-badge">${CAT_ICONS[t.category] || '📌'} ${t.category}</span></td>
+      <td>
+        <select class="inline-select status-${statusClass}" onchange="onStatusChange('${t.id}', this.value)">
+          ${['open','in-progress','planned','done','dismissed','ignored','archived'].map(s =>
+            `<option value="${s}"${t.status===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="inline-select" onchange="onFieldChange('${t.id}', 'agent', this.value)">
+          ${Object.entries(AGENT_LABELS).map(([v,l]) =>
+            `<option value="${v}"${t.agent===v?' selected':''}>${l}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="inline-select" onchange="onFieldChange('${t.id}', 'model', this.value)">
+          ${['unassigned','sonnet','opus','haiku'].map(v =>
+            `<option value="${v}"${t.model===v?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </td>
+      <td class="plan-cell">
+        ${t.plan_review ? `<span class="review-pill ${t.plan_review_type || 'notes'}" onclick="openReview('${t.id}')" title="${esc(t.plan_review_provider || '')}${t.plan_review_model ? ' · ' + esc(t.plan_review_model) : ''} — click to view">🔍 ${t.plan_review_type === 'alternative' ? 'alt plan' : 'notes'}</span>` : ''}
+        <div class="plan-preview${planEmpty?' empty':''}" onclick="editPlan('${t.id}', this)">${esc(t.plan)}</div>
+      </td>
+      <td class="td-count${countHigh?' high-count':''}">${t.log_count.toLocaleString()}</td>
+      <td style="min-width:90px">
+        ${activeTab === 'board' ? `
+        <button class="prompt-btn" onclick="copyPrompt('plan','${t.id}')" title="Copy plan prompt">📋 Get Plan</button>
+        <button class="prompt-btn review" onclick="openReview('${t.id}')"${!t.plan ? ' disabled title="No plan yet — get a plan first"' : ` title="${t.plan_review ? 'View saved review' : 'Copy review prompt to clipboard'}"`}>${t.plan_review ? '👁 View Review' : '🔍 Review'}</button>
+        <button class="prompt-btn run" onclick="copyPrompt('impl','${t.id}')"${!t.plan ? ' disabled title="No plan yet — get a plan first"' : ' title="Copy implement prompt"'}>▶ Implement</button>
+        ` : `<span style="font-size:11px;color:var(--text-muted)">—</span>`}
+      </td>
+      <td class="actions">
+        <button class="icon-btn" title="Edit" onclick="openEdit('${t.id}')">✏️</button>
+        ${activeTab === 'board'
+          ? `<button class="icon-btn" title="Archive" onclick="archiveTask('${t.id}')">📦</button>`
+          : `<button class="icon-btn restore" title="Restore to Open" onclick="restoreTask('${t.id}')">↩</button>`
+        }
+        <button class="icon-btn danger" title="Delete" onclick="confirmDelete('${t.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Restore expanded row
+  if (expandedId) insertDetail(expandedId);
+
+  renderCards();
+  updateHeaderHeight();
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleDetail(id) {
+  if (expandedId === id) {
+    expandedId = null;
+  } else {
+    expandedId = id;
+  }
+  render();
+}
+
+function insertDetail(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (!row) return;
+  const detail = document.createElement('tr');
+  detail.className = 'detail-row';
+  detail.innerHTML = `<td colspan="11">
+    <div class="detail-inner">
+      <strong>Description:</strong> ${esc(task.description)}<br><br>
+      ${task.notes ? `<strong>Notes:</strong> ${esc(task.notes)}<br><br>` : ''}
+      <strong>Created:</strong> ${task.created_at.slice(0,10)} &nbsp;
+      <strong>Updated:</strong> ${task.updated_at.slice(0,10)}
+      ${renderDetailReview(task)}
+    </div>
+  </td>`;
+  row.after(detail);
+}
+
+function renderDetailReview(task) {
+  if (!task.plan_review) return '';
+  const when = task.plan_review_at
+    ? new Date(task.plan_review_at).toLocaleString()
+    : '—';
+  const isAlt = task.plan_review_type === 'alternative';
+  const altActions = isAlt
+    ? `<button class="detail-link" onclick="openReview('${task.id}')">View diff</button>
+       <button class="detail-link" onclick="applyReviewFromDetail('${task.id}')">Apply alternative</button>`
+    : '';
+  return `
+    <div class="detail-review">
+      <div class="detail-review-meta">
+        <strong>🔍 Plan Review</strong> &nbsp;·&nbsp;
+        <b>${esc(task.plan_review_provider || '?')}</b> · ${esc(task.plan_review_model || '?')} ·
+        ${when} · type: <b>${esc(task.plan_review_type || 'notes')}</b>
+      </div>
+      <div class="detail-review-body">${esc(task.plan_review)}</div>
+      <div class="detail-review-actions">
+        <button class="detail-link" onclick="openReview('${task.id}')">${isAlt ? 'Open in modal' : 'Open'}</button>
+        ${altActions}
+      </div>
+    </div>`;
+}
+
+// Wrapper so the detail-row Apply button can flow through the same code path
+// as the modal Apply button without needing the modal to be open.
+async function applyReviewFromDetail(id) {
+  reviewState.taskId = id;
+  await applyReview();
+}
+
+async function onStatusChange(id, value) {
+  try {
+    await patch(id, { status: value });
+    render();
+    showToast('Status updated', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function onFieldChange(id, field, value) {
+  try {
+    await patch(id, { [field]: value });
+    const t = tasks.find(t => t.id === id);
+    if (t) t[field] = value;
+    showToast(`${field} updated`, 'success');
+    render();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+function editPlan(id, el) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const ta = document.createElement('textarea');
+  ta.className = 'plan-textarea';
+  ta.value = task.plan || '';
+  el.replaceWith(ta);
+  ta.focus();
+  ta.addEventListener('blur', async () => {
+    const val = ta.value;
+    try {
+      await patch(id, { plan: val });
+      if (task) task.plan = val;
+      showToast('Plan saved', 'success');
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    render();
+  });
+}
+
+// Sort headers
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = 1; }
+    document.querySelectorAll('th.sortable').forEach(t => t.classList.remove('sorted'));
+    th.classList.add('sorted');
+    th.querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+    render();
+  });
+});
+
+// Filters
+['f-severity','f-status','f-agent','search'].forEach(id =>
+  document.getElementById(id).addEventListener('input', render)
+);
+
+// Add/Edit modal
+function openAdd() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add Task';
+  ['title','description','source','plan','notes'].forEach(f =>
+    document.getElementById('m-'+f).value = '');
+  document.getElementById('m-severity').value = 'medium';
+  document.getElementById('m-category').value = 'automation';
+  document.getElementById('m-status').value = 'open';
+  document.getElementById('m-agent').value = 'unassigned';
+  document.getElementById('m-model').value = 'unassigned';
+  document.getElementById('m-log_count').value = '0';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function openEdit(id) {
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = `Edit ${id}`;
+  ['title','description','source','plan','notes'].forEach(f =>
+    document.getElementById('m-'+f).value = t[f] || '');
+  document.getElementById('m-severity').value = t.severity;
+  document.getElementById('m-category').value = t.category;
+  document.getElementById('m-status').value = t.status;
+  document.getElementById('m-agent').value = t.agent;
+  document.getElementById('m-model').value = t.model;
+  document.getElementById('m-log_count').value = t.log_count;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+async function saveModal() {
+  const data = {
+    title: document.getElementById('m-title').value.trim(),
+    description: document.getElementById('m-description').value.trim(),
+    severity: document.getElementById('m-severity').value,
+    category: document.getElementById('m-category').value,
+    source: document.getElementById('m-source').value.trim(),
+    status: document.getElementById('m-status').value,
+    agent: document.getElementById('m-agent').value,
+    model: document.getElementById('m-model').value,
+    plan: document.getElementById('m-plan').value.trim(),
+    log_count: parseInt(document.getElementById('m-log_count').value, 10) || 0,
+    notes: document.getElementById('m-notes').value.trim(),
+  };
+  if (!data.title) { showToast('Title is required', 'error'); return; }
+  try {
+    if (editingId) {
+      await patch(editingId, data);
+    } else {
+      const t = await create(data);
+      tasks.push(t);
+    }
+    closeModal();
+    render();
+    showToast(editingId ? 'Task updated' : 'Task created', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function confirmDelete(id) {
+  if (!confirm(`Delete ${id}? This cannot be undone.`)) return;
+  try {
+    await remove(id);
+    if (expandedId === id) expandedId = null;
+    render();
+    showToast('Task deleted', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── Review Plan ────────────────────────────────────────────────────────────
+// Two flows from the same 🔍 Review button:
+//   • No review yet → copy a "review this plan" prompt to clipboard. The user
+//     pastes it into the VS Code LLM pane; that agent then POSTs the result
+//     back to /api/tasks/:id/save-review (or calls usp_Task_SaveReview via
+//     the mssql MCP server).
+//   • Review exists → open the modal to view notes or the diff/Apply view.
+let reviewState = { taskId: null };
+
+async function openReview(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task || !task.plan) return;
+
+  // No review on file yet → copy the prompt and stop.
+  if (!task.plan_review) {
+    await copyReviewPrompt(task);
+    return;
+  }
+
+  // Review exists → open the view modal.
+  reviewState.taskId = id;
+  document.getElementById('review-title').textContent = `Plan Review — ${id}`;
+  document.getElementById('review-meta').innerHTML =
+    `<b>${esc(task.title)}</b> · ${task.severity} · ${task.category}`;
+
+  const meta = `<b>${esc(task.plan_review_provider || '?')}</b> · ${esc(task.plan_review_model || '?')} · ${
+    task.plan_review_at ? new Date(task.plan_review_at).toLocaleString() : ''
+  } · type: ${task.plan_review_type || 'notes'}`;
+
+  // Reset visibility
+  document.getElementById('review-notes').classList.add('hidden');
+  document.getElementById('review-alt').classList.add('hidden');
+  document.getElementById('review-apply').style.display = 'none';
+
+  if (task.plan_review_type === 'alternative') {
+    document.getElementById('review-alt-meta').innerHTML = meta;
+    renderDiff(task.plan, task.plan_review);
+    document.getElementById('review-alt').classList.remove('hidden');
+    document.getElementById('review-apply').style.display = '';
+  } else {
+    document.getElementById('review-notes-meta').innerHTML = meta;
+    document.getElementById('review-notes-content').textContent = task.plan_review;
+    document.getElementById('review-notes').classList.remove('hidden');
+  }
+
+  document.getElementById('review-overlay').classList.remove('hidden');
+}
+
+async function copyReviewPrompt(task) {
+  const text = buildReviewPrompt(task);
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  showToast(`🔍 Review prompt for ${task.id} copied — paste into VS Code`, 'success');
+}
+
+function closeReview() {
+  document.getElementById('review-overlay').classList.add('hidden');
+  reviewState.taskId = null;
+}
+
+async function redoReview() {
+  const id = reviewState.taskId;
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  await copyReviewPrompt(task);
+  closeReview();
+}
+
+async function applyReview() {
+  const id = reviewState.taskId;
+  if (!id) return;
+  if (!confirm('Replace the current plan with the proposed alternative? The previous plan is preserved in the audit trail.')) return;
+  try {
+    const r = await fetch(`/api/tasks/${id}/apply-review`, { method: 'POST' });
+    if (!r.ok) {
+      const err = await r.text();
+      let msg = err;
+      try { msg = JSON.parse(err).error || err; } catch (_) {}
+      throw new Error(msg);
+    }
+    const updated = await r.json();
+    const idx = tasks.findIndex(t => t.id === id);
+    if (idx !== -1) tasks[idx] = updated;
+    render();
+    closeReview();
+    showToast('Plan replaced with proposed alternative', 'success');
+  } catch (e) {
+    showToast('Apply failed: ' + e.message, 'error');
+  }
+}
+
+// Tiny LCS-based line diff. Returns rows of { left, right, type } where
+// type ∈ { same, remove, add, empty }. Side-by-side rendering pads the
+// shorter side with empty rows so lines align visually.
+function diffLines(a, b) {
+  const A = a.split('\n');
+  const B = b.split('\n');
+  const m = A.length, n = B.length;
+  // LCS table — fine for plan-sized inputs (few hundred lines max).
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--)
+    for (let j = n - 1; j >= 0; j--)
+      dp[i][j] = A[i] === B[j] ? dp[i+1][j+1] + 1 : Math.max(dp[i+1][j], dp[i][j+1]);
+
+  const rows = [];
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (A[i] === B[j]) {
+      rows.push({ left: A[i], right: B[j], type: 'same' });
+      i++; j++;
+    } else if (dp[i+1][j] >= dp[i][j+1]) {
+      rows.push({ left: A[i], right: '', type: 'remove' });
+      i++;
+    } else {
+      rows.push({ left: '', right: B[j], type: 'add' });
+      j++;
+    }
+  }
+  while (i < m) { rows.push({ left: A[i++], right: '', type: 'remove' }); }
+  while (j < n) { rows.push({ left: '', right: B[j++], type: 'add' }); }
+  return rows;
+}
+
+function renderDiff(currentPlan, proposedPlan) {
+  const a = currentPlan  || '';
+  const b = proposedPlan || '';
+  const left  = document.getElementById('diff-current');
+  const right = document.getElementById('diff-proposed');
+
+  // If either side is empty, the LCS path collapses every row to "add" or
+  // "remove" with a literal `&nbsp;` opposite. That can look "blank" because
+  // every row on one side is an empty placeholder. Surface that explicitly.
+  if (!a.trim() && !b.trim()) {
+    left.innerHTML  = '<div class="diff-line empty" style="padding:12px">(current plan is empty)</div>';
+    right.innerHTML = '<div class="diff-line empty" style="padding:12px">(proposed plan is empty)</div>';
+    return;
+  }
+  if (!a.trim()) {
+    left.innerHTML  = '<div class="diff-line empty" style="padding:12px">(current plan is empty)</div>';
+    right.innerHTML = b.split('\n').map(line =>
+      `<div class="diff-line add">${esc(line) || '&nbsp;'}</div>`).join('');
+    return;
+  }
+  if (!b.trim()) {
+    left.innerHTML  = a.split('\n').map(line =>
+      `<div class="diff-line remove">${esc(line) || '&nbsp;'}</div>`).join('');
+    right.innerHTML = '<div class="diff-line empty" style="padding:12px">(proposed plan is empty)</div>';
+    return;
+  }
+
+  const rows = diffLines(a, b);
+  left.innerHTML  = rows.map(r => {
+    const cls = r.type === 'remove' ? 'remove' : r.type === 'add' ? 'empty' : 'same';
+    return `<div class="diff-line ${cls}">${esc(r.left) || '&nbsp;'}</div>`;
+  }).join('');
+  right.innerHTML = rows.map(r => {
+    const cls = r.type === 'add' ? 'add' : r.type === 'remove' ? 'empty' : 'same';
+    return `<div class="diff-line ${cls}">${esc(r.right) || '&nbsp;'}</div>`;
+  }).join('');
+}
+
+document.getElementById('review-close').addEventListener('click', closeReview);
+document.getElementById('review-redo').addEventListener('click', redoReview);
+document.getElementById('review-apply').addEventListener('click', applyReview);
+document.getElementById('review-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('review-overlay')) closeReview();
+});
+
+document.getElementById('btn-add').addEventListener('click', openAdd);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-save').addEventListener('click', saveModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// Export
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ha-tasks.json';
+  a.click();
+  showToast('Exported tasks.json', 'success');
+});
+
+// Import
+document.getElementById('file-import').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const imported = JSON.parse(text);
+    if (!Array.isArray(imported)) throw new Error('Expected JSON array');
+    const r = await fetch(API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(imported)
+    });
+    if (!r.ok) throw new Error(await r.text());
+    tasks = imported;
+    expandedId = null;
+    render();
+    showToast(`Imported ${imported.length} tasks`, 'success');
+  } catch(e) { showToast('Import failed: ' + e.message, 'error'); }
+  e.target.value = '';
+});
+
+// Toast
+let toastTimer;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal();
+    closeReview();
+  }
+});
+
+// ── Prompt generation ──────────────────────────────────────────────────────
+function agentSlash(task) {
+  if (task.agent && task.agent !== 'unassigned') return '/' + task.agent;
+  const map = { dashboard: '/ha-dashboard-designer', hacs: '/ha-reviver' };
+  return map[task.category] || '/ha-developer';
+}
+
+function buildPlanPrompt(task) {
+  const slash = agentSlash(task);
+  const agentName = slash.slice(1);
+  return `${slash}
+
+Pick up task ${task.id} from the task board and build a plan.
+
+Task: "${task.title}"
+Task board API: http://localhost:3001/api/tasks
+
+Steps:
+1. GET http://localhost:3001/api/tasks — read ${task.id}'s full details
+2. Pull the relevant config from live HA via MCP
+3. Diagnose the root cause
+4. Write a concrete fix plan
+5. PUT http://localhost:3001/api/tasks/${task.id} with:
+   { "plan": "<your plan>", "agent": "${agentName}", "model": "sonnet", "status": "planned" }
+
+Plan only — do NOT implement yet.`;
+}
+
+function buildReviewPrompt(task) {
+  return `/ha-reviewer
+
+Review the existing plan for task ${task.id} on the task board and write a structured review.
+
+Task: "${task.title}"
+Severity: ${task.severity}  ·  Category: ${task.category}  ·  Status: ${task.status}
+Task board API: http://localhost:3001/api/tasks
+
+Steps:
+1. GET http://localhost:3001/api/tasks/${task.id} — read the full task and its current "plan" field.
+2. Pull the relevant live HA config via MCP so you can ground the review in reality, not assumptions.
+3. Decide whether the existing plan is sound (only optimization notes are needed) or whether it should be substantially rewritten.
+4. POST http://localhost:3001/api/tasks/${task.id}/save-review with this JSON body:
+   {
+     "provider": "<your LLM, e.g. claude-code | gpt-4 | gemini>",
+     "model":    "<specific model id, e.g. claude-opus-4-7>",
+     "type":     "notes"  | "alternative",
+     "content":  "<markdown body>"
+   }
+   Use "notes" when the plan is sound — "content" should be a concise markdown bullet list of optimizations.
+   Use "alternative" only when the plan needs a substantial rewrite — "content" should be a full replacement plan in markdown that can be applied as-is.
+
+Constraints:
+- Do NOT modify the plan field directly. Only write to /save-review. The user decides whether to apply an alternative via the board UI.
+- Do NOT change status, agent, or any other field.
+- Ground every recommendation in something you actually saw in the live HA config or in the task description — no speculative changes.`;
+}
+
+function buildImplPrompt(task) {
+  const slash = agentSlash(task);
+  const plan = (task.plan || '').trim() || '(no plan recorded — STOP and ask)';
+  return `${slash}
+
+Implement the fix for task ${task.id} from the task board.
+
+Task: "${task.title}"
+Task board API: http://localhost:3001/api/tasks
+
+PLAN TO IMPLEMENT (this is the current approved plan — use this exact text, ignore any earlier version you may have seen):
+\`\`\`
+${plan}
+\`\`\`
+
+Steps:
+1. PUT http://localhost:3001/api/tasks/${task.id} → set status: "in-progress"
+2. Pull the relevant live config from HA via MCP
+3. Follow the plan above exactly — implement the fix
+4. Validate: run ha_check_config, confirm no errors
+5. PUT http://localhost:3001/api/tasks/${task.id} → set status: "done"
+
+Do not deviate from the plan above. If you discover something that contradicts the plan,
+STOP and report the discrepancy instead of improvising.`;
+}
+
+async function copyPrompt(type, id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  const text = type === 'plan' ? buildPlanPrompt(task) : buildImplPrompt(task);
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  showToast(`${type === 'plan' ? '📋 Plan' : '▶ Implement'} prompt copied!`, 'success');
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-board').classList.toggle('active', tab === 'board');
+  document.getElementById('tab-archive').classList.toggle('active', tab === 'archive');
+  expandedId = null;
+  render();
+}
+
+async function archiveTask(id) {
+  try {
+    await patch(id, { status: 'archived' });
+    render();
+    showToast('Task archived', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function restoreTask(id) {
+  try {
+    await patch(id, { status: 'open' });
+    render();
+    showToast('Task restored to Open', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+// ── Responsive header height ─────────────────────────────────────────────────
+function updateHeaderHeight() {
+  const h = document.querySelector('.header').offsetHeight;
+  document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+window.addEventListener('resize', updateHeaderHeight);
+
+// ── Mobile card view ──────────────────────────────────────────────────────────
+function toggleCardDetail(id) {
+  const el = document.getElementById('cd-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function renderCards() {
+  const list = sorted(filtered());
+  const el = document.getElementById('card-list');
+  if (!el) return;
+  if (list.length === 0) { el.innerHTML = ''; return; }
+  const boardTab = activeTab === 'board';
+  el.innerHTML = list.map(t => {
+    const sc = t.status.replace(/\s+/g, '-');
+    const planEmpty = !t.plan || t.plan.trim() === '';
+    return `
+    <div class="task-card status-${sc}" data-id="${t.id}">
+      <div class="card-top">
+        <span class="badge ${t.severity}">${t.severity}</span>
+        <select class="inline-select status-${sc}" onchange="onStatusChange('${t.id}', this.value)">
+          ${['open','in-progress','planned','done','dismissed','ignored','archived'].map(s =>
+            `<option value="${s}"${t.status===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+        <span class="card-id">#${t.id}</span>
+      </div>
+      <div class="card-title" onclick="toggleCardDetail('${t.id}')">${esc(t.title)}</div>
+      <div class="card-meta">
+        <span class="cat-badge">${CAT_ICONS[t.category]||'📌'} ${t.category}</span>
+        <span>${AGENT_LABELS[t.agent]||'—'}</span>
+        <span>${t.log_count.toLocaleString()} logs</span>
+      </div>
+      ${boardTab ? `
+      <div class="card-actions">
+        <button class="prompt-btn" onclick="copyPrompt('plan','${t.id}')">📋 Plan</button>
+        <button class="prompt-btn review" onclick="openReview('${t.id}')"${!t.plan?' disabled':''}>🔍 Review</button>
+        <button class="prompt-btn run" onclick="copyPrompt('impl','${t.id}')"${!t.plan?' disabled':''}>▶ Run</button>
+        <button class="icon-btn" onclick="openEdit('${t.id}')">✏️</button>
+        <button class="icon-btn danger" onclick="confirmDelete('${t.id}')">🗑️</button>
+      </div>` : `
+      <div class="card-actions">
+        <button class="icon-btn restore" onclick="restoreTask('${t.id}')">↩ Restore</button>
+        <button class="icon-btn danger" onclick="confirmDelete('${t.id}')">🗑️</button>
+      </div>`}
+      <div class="card-detail" id="cd-${t.id}">
+        ${t.description ? `<div>${esc(t.description)}</div>` : ''}
+        ${t.source ? `<div style="margin-top:6px"><strong>Source:</strong> ${esc(t.source)}</div>` : ''}
+        ${!planEmpty ? `<div style="margin-top:8px"><strong>Plan:</strong><div class="card-plan-text">${esc(t.plan)}</div></div>` : ''}
+        <div style="margin-top:8px;font-size:11px">
+          Created: ${t.created_at.slice(0,10)} &nbsp; Updated: ${t.updated_at.slice(0,10)}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Init
+load();
+</script>
+</body>
+</html>

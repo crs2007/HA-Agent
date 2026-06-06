@@ -1,12 +1,15 @@
 {
   "scripts": {
-    "tasks": "node tools/task-server.js"
+    "tasks": "node tools/task-server.js",
+    "migrate": "node tools/database/05_migrate.js"
   },
   "devDependencies": {
     "ws": "^8.20.0"
   },
   "dependencies": {
     "express": "^5.2.1",
+    "msnodesqlv8": "^5.1.9",
+    "mssql": "^11.0.1",
     "ssh2": "^1.17.0"
   }
 }

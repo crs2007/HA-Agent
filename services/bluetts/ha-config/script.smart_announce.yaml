@@ -1,0 +1,130 @@
+# Language-aware TTS router.
+#
+# Append this to /config/scripts.yaml as a new top-level key.
+#
+# Behavior:
+#   - If `message` contains any Hebrew character (U+0590..U+05FF) → synth via
+#     BlueTTS (local, 192.168.68.30:8088) and play the WAV on every entity in
+#     `speakers`.
+#   - Otherwise → fall back to tts.google_translate_say on each speaker (same
+#     cloud TTS path the rest of the system uses).
+#
+# This does NOT touch smart_announcement_universal_notifier. Call this script
+# directly from automations (or wrap it) when you want language-aware TTS.
+# Telegram/mobile push are out of scope here — keep using
+# smart_announcement_universal_notifier for full fan-out.
+
+smart_announce:
+  alias: Smart Announce (Hebrew→BlueTTS, Other→Google)
+  description: >-
+    Language-aware TTS primitive. Hebrew text routes to local BlueTTS;
+    everything else falls back to Google Translate TTS. Plays on the given
+    media_player list.
+  icon: mdi:translate
+  mode: queued
+  max: 10
+  fields:
+    message:
+      name: Message
+      description: Text to announce (any language)
+      required: true
+      example: ארוחת הערב מוכנה!
+      selector:
+        text:
+          multiline: true
+    speakers:
+      name: Speakers
+      description: One or more media_player entities to play on
+      required: true
+      example: media_player.kitchen_google_home
+      selector:
+        entity:
+          domain: media_player
+          multiple: true
+    voice:
+      name: Voice (BlueTTS only)
+      description: Voice to use when routing to BlueTTS
+      required: false
+      default: female1
+      selector:
+        select:
+          options:
+            - label: Female
+              value: female1
+            - label: Male
+              value: male1
+  sequence:
+    - variables:
+        # Hebrew detection: any char in the Hebrew Unicode block.
+        is_hebrew: "{{ message | regex_search('[\u0590-\u05FF]') is not none }}"
+        speaker_list: >-
+          {{ speakers if speakers is iterable and speakers is not string
+             else [speakers] }}
+    - alias: Log routing decision
+      service: logbook.log
+      data:
+        name: Smart Announce
+        message: >-
+          engine={{ 'BlueTTS' if is_hebrew else 'Google' }}
+          speakers={{ speaker_list | join(', ') }}
+          msg="{{ message[:60] }}"
+      continue_on_error: true
+    - choose:
+        - alias: Hebrew → BlueTTS
+          conditions: "{{ is_hebrew }}"
+          sequence:
+            - alias: Synthesize once via BlueTTS
+              service: rest_command.bluetts_say
+              data:
+                text: "{{ message }}"
+                lang: he
+                voice: "{{ voice | default('female1') }}"
+              response_variable: bluetts_resp
+            - alias: Abort + fall back if synth failed
+              if:
+                - condition: template
+                  value_template: >-
+                    {{ not (bluetts_resp.status == 200
+                        and bluetts_resp.content.url is defined) }}
+              then:
+                - service: system_log.write
+                  data:
+                    level: warning
+                    logger: smart_announce
+                    message: >-
+                      BlueTTS failed, falling back to Google TTS.
+                      status={{ bluetts_resp.status | default('?') }}
+                - repeat:
+                    for_each: "{{ speaker_list }}"
+                    sequence:
+                      - service: tts.google_translate_say
+                        target:
+                          entity_id: "{{ repeat.item }}"
+                        data:
+                          message: "{{ message }}"
+                          language: iw
+                        continue_on_error: true
+              else:
+                - alias: Play BlueTTS WAV on every speaker
+                  repeat:
+                    for_each: "{{ speaker_list }}"
+                    sequence:
+                      - service: media_player.play_media
+                        target:
+                          entity_id: "{{ repeat.item }}"
+                        data:
+                          media_content_id: >-
+                            http://192.168.68.30:8088{{ bluetts_resp.content.url }}
+                          media_content_type: music
+                        continue_on_error: true
+      default:
+        - alias: Non-Hebrew → Google Translate TTS
+          repeat:
+            for_each: "{{ speaker_list }}"
+            sequence:
+              - service: tts.google_translate_say
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  message: "{{ message }}"
+                continue_on_error: true

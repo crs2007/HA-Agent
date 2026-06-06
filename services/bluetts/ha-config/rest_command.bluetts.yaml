@@ -1,0 +1,12 @@
+# Paste this block into configuration.yaml on the HA host.
+# If a `rest_command:` key already exists, append `bluetts_say:` under it
+# (do NOT add a second `rest_command:` line — HA only reads one).
+
+rest_command:
+  bluetts_say:
+    url: "http://192.168.68.30:8088/synthesize"
+    method: POST
+    content_type: "application/json"
+    payload: >-
+      {"text": {{ text | to_json }}, "lang": "{{ lang | default('he') }}", "voice": "{{ voice | default('female1') }}"}
+    timeout: 15

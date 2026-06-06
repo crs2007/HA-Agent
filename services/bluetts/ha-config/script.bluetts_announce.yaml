@@ -1,0 +1,73 @@
+# Append this script to scripts.yaml on the HA host (top-level key — same level as
+# `smart_announcement_universal_notifier`).
+#
+# Flow: text -> BlueTTS REST (returns {id, url}) -> media_player.play_media on
+# the selected speaker with the absolute WAV URL.
+
+bluetts_announce:
+  alias: BlueTTS Announce (PoC)
+  description: >-
+    Proof-of-concept local Hebrew TTS via BlueTTS on LXC 100.
+    Calls rest_command.bluetts_say, then plays the returned WAV on the target
+    media_player. Keep Google TTS path untouched — this is opt-in.
+  icon: mdi:text-to-speech
+  mode: queued
+  max: 5
+  fields:
+    message:
+      name: Message
+      description: Text to synthesize (Hebrew or mixed)
+      required: true
+      example: שלום, זאת בדיקה של BlueTTS
+      selector:
+        text:
+          multiline: true
+    target:
+      name: Target media_player
+      description: Speaker entity to play on
+      required: true
+      example: media_player.kitchen_google_home
+      selector:
+        entity:
+          domain: media_player
+    voice:
+      name: Voice
+      description: BlueTTS voice
+      required: false
+      default: female1
+      selector:
+        select:
+          options:
+            - label: Female
+              value: female1
+            - label: Male
+              value: male1
+  sequence:
+    - alias: Synthesize via BlueTTS
+      service: rest_command.bluetts_say
+      data:
+        text: "{{ message }}"
+        lang: he
+        voice: "{{ voice | default('female1') }}"
+      response_variable: bluetts_resp
+    - alias: Abort if no audio url returned
+      if:
+        - condition: template
+          value_template: "{{ bluetts_resp.status == 200 and bluetts_resp.content.url is defined }}"
+      then:
+        - alias: Play WAV on target speaker
+          service: media_player.play_media
+          target:
+            entity_id: "{{ target }}"
+          data:
+            media_content_id: "http://192.168.68.30:8088{{ bluetts_resp.content.url }}"
+            media_content_type: music
+      else:
+        - alias: Log failure
+          service: system_log.write
+          data:
+            level: warning
+            logger: bluetts_announce
+            message: >-
+              BlueTTS synth failed: status={{ bluetts_resp.status | default('?') }}
+              body={{ bluetts_resp.content | default({}) | to_json }}

@@ -1,0 +1,7 @@
+# Append this to input_boolean.yaml on the HA host.
+# Runtime toggle for A/B testing and instant rollback.
+
+use_bluetts:
+  name: Use BlueTTS (PoC)
+  icon: mdi:toggle-switch-variant
+  initial: off

@@ -1,0 +1,20 @@
+services:
+  ha-task-server:
+    build:
+      context: ../..                       # repo root, so the Dockerfile COPYs resolve
+      dockerfile: services/ha-task-server/Dockerfile
+    image: ha-task-server:local
+    container_name: ha-task-server
+    restart: unless-stopped                # auto-starts with Docker Desktop on login
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env                               # gitignored — holds MSSQL_PASSWORD
+    environment:
+      MSSQL_SERVER:   host.docker.internal
+      MSSQL_PORT:     "1433"           # SQLSERVER2022 static TCP port (IPAll); 1434 is DAC-only
+      MSSQL_DATABASE: TaskManager
+      MSSQL_USER:     HA_Task_DBAccess
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    mem_limit: 512m

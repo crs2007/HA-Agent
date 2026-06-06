@@ -117,7 +117,7 @@ Requires `ha_mcp_tools` custom component in HA for file system and YAML editing 
 | Get single script | `ha_get_script` | `entity_id` |
 | Search config for entity | `ha_search_config_deep` | `query` |
 | Validate HA config | `ha_check_config` | — |
-| Read HA error log | `ha_get_logs` | `level`, `search`, `limit` |
+| Read HA logs (errors/warnings) | `ha_get_logs` | `source: system`, `level`, `search`, `limit` — ⚠️ `source: error_log` 404s on this HA OS VM (no log file; logs go to journald). Use `source: system`; `source: logbook` for entity history |
 | Get automation trace | `ha_get_automation_traces` | `automation_id` |
 | Render Jinja2 template | `ha_eval_template` | `template` |
 | Pull dashboard config | `ha_config_get_dashboard` | `dashboard_path` |

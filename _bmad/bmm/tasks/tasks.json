@@ -1,0 +1,71 @@
+[
+  {
+    "id": "T025",
+    "status": "done",
+    "notes": "Implemented: src/ha_mcp/prompts/ package with 12 prompts across 5 modules (safety, troubleshooting, automation, status, security). Registered via HomeAssistantSmartMCPServer._initialize_prompts(). PR: crs2007/ha-mcp feature/mcp-prompts-layer. ha_check_config not applicable (Python code change, not HA YAML config)."
+  },
+  {
+    "id": "T026",
+    "title": "ha-mcp: Add ha_alarm_control dedicated tool for alarm_control_panel domain",
+    "description": "ha_call_service is dangerous for alarm panels � wrong arm mode or missing code can trigger false alarms or lockouts. robbrad has a dedicated alarm_control tool with parameter-validated arm-mode enums and code support. Add ha_alarm_control(entity_id, action, code?) with action enum: arm_home | arm_away | arm_night | arm_vacation | disarm. Validate that code is required when code_arm_required attribute is set on the panel. Return current alarm state + triggered boolean after operation.",
+    "severity": "medium",
+    "category": "feature",
+    "source": "gap-analysis/robbrad-homeassistant-mcp",
+    "status": "planned",
+    "agent": "unassigned",
+    "model": "unassigned",
+    "plan": "Create src/ha_mcp/tools/tools_alarm.py. Register ha_alarm_control tool with readOnlyHint: false and confirmationRequired: true annotations. Validate code_arm_required attribute before disarm. Map action enum to HA services: alarm_control_panel.alarm_arm_home, alarm_arm_away, alarm_arm_night, alarm_arm_vacation, alarm_disarm. Register in server.py.",
+    "log_count": 0,
+    "created_at": "2026-05-05T00:00:00Z",
+    "updated_at": "2026-05-07T14:53:58.371Z",
+    "notes": "Effort: 0.5 days. Safety-sensitive domain � this is the highest-priority item in GAP-2 (domain tools). ha_call_service gives no guardrails on arm codes."
+  },
+  {
+    "id": "T027",
+    "title": "ha-mcp: Add structured error log parsing to ha_get_logs",
+    "description": "ha_get_logs(source=error_log) returns raw text � routinely 50-200KB on a 2,600-entity install that floods Claude context and is hard to act on. robbrad deduplicates and groups by component with occurrence counts. Enhance ha_get_logs with a structured=True parameter that: (1) parses raw log into error objects {timestamp, logger, level, message}; (2) deduplicates by (logger, message) with occurrence counts; (3) groups by component prefix (e.g. homeassistant.components.zha); (4) returns top-N by occurrence count; (5) caps response to 8,000 tokens.",
+    "severity": "medium",
+    "category": "feature",
+    "source": "gap-analysis/robbrad-homeassistant-mcp",
+    "status": "planned",
+    "agent": "unassigned",
+    "model": "unassigned",
+    "plan": "Locate the error log tool file (likely tools_system.py or tools_logs.py). Add structured=True parameter to ha_get_logs. Implement parse_error_log(raw_text) -> list[ErrorEntry] with dedup + grouping logic. Alternatively add ha_get_error_summary() as a new tool to avoid breaking existing callers. Run pytest to confirm no regressions.",
+    "log_count": 0,
+    "created_at": "2026-05-05T00:00:00Z",
+    "updated_at": "2026-05-07T14:54:03.153Z",
+    "notes": "Effort: 0.5 days. Direct quality improvement for the Reviver agent health-check workflow. Raw log output is the primary cause of context overflow during diagnostics."
+  },
+  {
+    "id": "T028",
+    "title": "ha-mcp: Add dedicated tools for vacuum, water_heater, and humidifier domains",
+    "description": "ha_call_service covers these domains but requires Claude to look up service names, construct data dicts, and handle domain-specific parameter validation manually. robbrad has dedicated validated tools for all three. Add: ha_vacuum_control(entity_id, action, fan_speed?) with action enum start|pause|stop|return_to_base|locate; ha_water_heater_control(entity_id, action, temperature?, operation_mode?) with action set_temperature|set_operation_mode|turn_on|turn_off; ha_humidifier_control(entity_id, action, humidity?) with action turn_on|turn_off|set_humidity.",
+    "severity": "low",
+    "category": "feature",
+    "source": "gap-analysis/robbrad-homeassistant-mcp",
+    "status": "planned",
+    "agent": "unassigned",
+    "model": "unassigned",
+    "plan": "Create src/ha_mcp/tools/tools_appliances.py. Register three tools. Map enums to HA services. Register in server.py. Skip: siren, valve, lawn_mower (niche � ha_call_service adequate, adding rarely-used tools inflates catalog unnecessarily). Test each against a real entity in HA.",
+    "log_count": 0,
+    "created_at": "2026-05-05T00:00:00Z",
+    "updated_at": "2026-05-07T14:54:15.676Z",
+    "notes": "Effort: 1 day. Reduces token usage and eliminates service-name lookup step for these domains. Roomba is tracked as T002 � vacuum tool would help if that device comes back online."
+  },
+  {
+    "id": "T029",
+    "title": "ha-mcp: Add ha_intent_process tool for HA Assist pipeline",
+    "description": "robbrad exposes an intent_handle tool that routes a natural-language string directly through Home Assistant Assist intent system (same pipeline as voice commands). We have no equivalent. Add ha_intent_process(sentence, language?) that POSTs to /api/conversation/process. Returns intent response and any service calls executed. Use cases: (1) test whether HA can handle a command natively before building an automation; (2) validate custom sentence templates during development; (3) debug Assist pipeline issues; (4) Reviver agent testing automation intent coverage.",
+    "severity": "low",
+    "category": "feature",
+    "source": "gap-analysis/robbrad-homeassistant-mcp",
+    "status": "planned",
+    "agent": "unassigned",
+    "model": "unassigned",
+    "plan": "Create src/ha_mcp/tools/tools_assist.py. POST to /api/conversation/process with {text: sentence, language: language or hass default}. Return response dict including intent, slots, speech, and any executed service calls. Register in server.py.",
+    "log_count": 0,
+    "created_at": "2026-05-05T00:00:00Z",
+    "updated_at": "2026-05-07T14:54:25.320Z",
+    "notes": "Effort: 0.5 days. Lowest priority of the sprint but easy to implement. Useful for validating custom sentence templates and testing Assist pipeline coverage."
+  }
+]

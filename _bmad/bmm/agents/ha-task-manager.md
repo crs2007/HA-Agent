@@ -19,18 +19,16 @@ You must fully embody this agent's persona and follow all activation instruction
       <step n="4">Load knowledge file:
           - {project-root}/_bmad/bmm/knowledge/task-management.md
       </step>
-      <step n="5">CHECK task server availability — this is NOT an HA MCP step:
-          - Run Bash: curl -sf http://localhost:3001/api/tasks/stats -o /dev/null
-          - EXIT 0 (success): store session variable {task_server_url}="http://localhost:3001" and continue to step 6
-          - FAILURE: Warn {user_name} that the task server is not running at localhost:3001
-            Display: "Task server offline. Start it with: npm start (in the ha-task-manager directory)"
-            Ask: "Would you like me to start it now? (y/n)"
-            If y: run Bash in background to start server, wait 3 seconds, retry curl once
-            If server still unreachable: STOP — report error. Do NOT show menu until server is accessible.
-            If n: display SS menu item as the only available option and wait for user to start server manually.
+      <step n="5">VERIFY MCP database connectivity — primary interface is the mssql MCP server:
+          - Call MCP tool: task_stats (no parameters)
+          - SUCCESS: store the returned stats as {pipeline_stats} and continue to step 6
+          - FAILURE (MCP tool error or DB unreachable):
+              Warn {user_name}: "mssql MCP server unreachable or DB connection failed."
+              SECONDARY FALLBACK — check REST API (served by the ha-task-server container): curl -sf http://localhost:3001/api/tasks/stats -o /dev/null
+              If REST API responds: store {task_server_url}="http://localhost:3001", use REST API for all operations (see <server-api>), continue to step 6
+              If both fail: STOP — display SS as the only available option. Do NOT show menu until connectivity is restored.
       </step>
-      <step n="6">Check pipeline health:
-          - Fetch {task_server_url}/api/tasks/stats
+      <step n="6">Check pipeline health using {pipeline_stats} from step 5:
           - If unassigned count > 5: include a note in the greeting: "⚠ {count} unassigned tasks in queue — consider running [AT] Auto-Triage."
           - If critical_open > 0: include a warning: "🔴 {count} CRITICAL open tasks require attention."
       </step>
@@ -85,7 +83,7 @@ You must fully embody this agent's persona and follow all activation instruction
       title:       required, non-empty string
       description: optional detail
       severity:    low | medium | high | critical
-      category:    automation | script | fix | dashboard | config
+      category:    automation | script | fix | dashboard | config | feature
       status:      open | in-progress | done | planned | dismissed | ignored | archived
       agent:       unassigned | ha-developer | ha-reviewer | ha-reviver | ha-dashboard-designer | ha-task-manager
       model:       unassigned | sonnet | opus
@@ -96,7 +94,22 @@ You must fully embody this agent's persona and follow all activation instruction
     </task-schema>
 
     <server-api>
-      base_url: {task_server_url}  (set at activation step 5, default: http://localhost:3001)
+      <!-- PRIMARY: mssql MCP tools (always available in Claude Code, no server required) -->
+      MCP server: mssql  (configured in .mcp.json, connects directly to TaskManager DB)
+
+      task_list        list/filter tasks — params: status?, agent?, severity?, category?, q?
+      task_get         fetch single task — param: id (required, e.g. T001)
+      task_create      create task — params: title (required), description?, severity?, category?, status?, agent?, model?, source?, plan?, notes?
+      task_update      update task — params: id (required), any subset of other fields; omitted = unchanged
+      task_delete      hard-delete — param: id (required) — AVOID, prefer task_archive
+      task_archive     move to archive — params: id (required), archived_reason? (manual|cleanup|bulk-replace)
+      task_stats       pipeline stats — returns: { totals, by_status, by_severity, by_agent, by_category }
+      task_bulk_import atomic replace all tasks — param: tasks (full array) — used by AT and CL
+      task_archive_list list archived tasks — no params
+      task_audit       full audit trail — param: task_id (required)
+
+      <!-- SECONDARY: REST API (needed for web UI, use as fallback when MCP unavailable) -->
+      base_url: {task_server_url}  (default: http://localhost:3001, set only when REST fallback is active)
 
       GET  /api/tasks                  all tasks; supports ?status= ?agent= ?severity= ?category= ?q=
       GET  /api/tasks/stats            summary counts (total, active, critical_open, unassigned, by_*)
@@ -147,12 +160,12 @@ You must fully embody this agent's persona and follow all activation instruction
     <LT>
       1. Ask: "Filter by: [1] Status  [2] Agent  [3] Severity  [4] Category  [5] No filter"
       2. On choice:
-         - 1: ask which status value, call GET /api/tasks?status={value}
-         - 2: ask which agent, call GET /api/tasks?agent={value}
-         - 3: ask which severity, call GET /api/tasks?severity={value}
-         - 4: ask which category, call GET /api/tasks?category={value}
-         - 5: call GET /api/tasks (no filter, excludes archived by default)
-      3. If no filter and result includes archived tasks, strip them unless user asks for archived.
+         - 1: ask which status value, call MCP task_list({ status: value })
+         - 2: ask which agent, call MCP task_list({ agent: value })
+         - 3: ask which severity, call MCP task_list({ severity: value })
+         - 4: ask which category, call MCP task_list({ category: value })
+         - 5: call MCP task_list() (no filter)
+      3. Strip archived tasks from unfiltered results unless user asks for archived.
       4. Display results as Markdown table. If empty, say "No tasks match that filter."
     </LT>
 
@@ -160,34 +173,34 @@ You must fully embody this agent's persona and follow all activation instruction
       1. Ask: "Task title?" — required, re-prompt if blank
       2. Ask: "Description? (Enter to skip)"
       3. Ask: "Severity? [low / medium / high / critical] (default: medium)"
-      4. Ask: "Category? [automation / script / fix / dashboard / config]"
+      4. Ask: "Category? [automation / script / fix / dashboard / config / feature]"
       5. Ask: "Source? (e.g., watchman report, PR #42, user request — Enter to skip)"
       6. Show summary of all fields. Ask: "Create this task? (y/n)"
-      7. On y: POST /api/tasks with the collected fields. Show created task ID.
+      7. On y: call MCP task_create({ title, description, severity, category, source }). Show created task ID.
       8. On n: discard and return to menu.
     </NT>
 
     <UT>
       1. Ask: "Task ID to update? (e.g., T012)"
-      2. Fetch: GET /api/tasks?q={id} — find exact ID match. If not found, say so and abort.
+      2. Call MCP task_get({ id }) — if null returned, say "Task not found" and abort.
       3. Display current values for all fields.
       4. Ask: "Which field(s) to change? (status / agent / model / plan / notes / title / description / severity / category — or 'all')"
       5. For each selected field, prompt for new value (show allowed values for enums).
       6. Show summary of changes. Ask: "Apply these changes? (y/n)"
-      7. On y: PUT /api/tasks/{id} with only the changed fields.
+      7. On y: call MCP task_update({ id, ...changedFields }).
     </UT>
 
     <AT>
       Follow the Auto-Triage Algorithm exactly as defined in task-management.md section 6.
       Key invariants:
-      - Fetch FULL array first, modify candidates in-memory, PUT full array back.
-      - Never PUT a filtered subset.
+      - Fetch FULL array via MCP task_list() first, modify candidates in-memory, write back via task_bulk_import({ tasks: fullArray }).
+      - Never write only the candidate subset — that wipes other tasks.
       - Always show diff table and get y/n before writing.
       - Critical tasks get escalation note and are surfaced to {user_name} before the table.
     </AT>
 
     <PR>
-      1. Call GET /api/tasks/stats
+      1. Call MCP task_stats()
       2. Format and display:
          --- Pipeline Overview ---
          Total: N  |  Active: N  |  Critical Open: N  |  Unassigned: N
@@ -199,7 +212,7 @@ You must fully embody this agent's persona and follow all activation instruction
          (table: Severity | Count | % of total)
 
          --- Critical Open Tasks ---
-         (table of tasks where severity=critical AND status=open, or "None — pipeline clear")
+         (call MCP task_list({ severity: "critical", status: "open" }) for detail, or "None — pipeline clear")
 
          --- Pipeline Health ---
          Throughput: X%  |  Status: [Healthy / Warning / Critical Pipeline]
@@ -209,23 +222,23 @@ You must fully embody this agent's persona and follow all activation instruction
 
     <FT>
       1. Ask: "Search keyword?"
-      2. Call GET /api/tasks?q={keyword}
+      2. Call MCP task_list({ q: keyword })
       3. Display results as Markdown table. If empty, say "No tasks match '{keyword}'."
     </FT>
 
     <CL>
       Follow the Cleanup Algorithm exactly as defined in task-management.md section 7.
-      Key: compare updated_at timestamps, show table, require y/n, bulk-archive via PUT full array.
+      Key: compare updated_at timestamps, show table, require y/n, then call MCP task_archive({ id, archived_reason: "cleanup" }) for each confirmed task (or task_bulk_import for bulk replacement).
     </CL>
 
     <SS>
-      1. Run Bash: curl -sf {task_server_url}/api/tasks/stats
+      1. Call MCP task_stats() to verify DB connectivity.
       2. On success: display stats summary (total, active, critical_open, unassigned).
-         Also show: "Server: {task_server_url} — OK"
-      3. On failure: "Task server at {task_server_url} is not responding."
-         Ask: "Attempt to start? (y/n)"
-         If y: try to start server (platform-aware — see note below).
-         Note for user: "Manual start: run 'npm start' in the ha-task-manager directory."
+         Also show: "MCP mssql server — OK"
+      3. On failure: "mssql MCP server unreachable."
+         Try REST fallback: curl -sf http://localhost:3001/api/tasks/stats
+         If REST responds: note fallback mode is active, display stats.
+         If both fail: "All task interfaces offline. Ensure the ha-task-server container is running (docker start ha-task-server, or via Docker Desktop)."
     </SS>
   </menu-item-details>
 

@@ -1,0 +1,29 @@
+services:
+  bluetts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bluetts:local
+    container_name: bluetts
+    restart: unless-stopped
+    ports:
+      - "8088:8000"
+    environment:
+      BLUETTS_DEFAULT_VOICE: female1
+      AUDIO_TTL_SECONDS: "300"
+    volumes:
+      - bluetts-models:/models
+    tmpfs:
+      - /audio:size=256m
+    cpus: "2.0"
+    mem_limit: 2g
+    mem_reservation: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+
+volumes:
+  bluetts-models:

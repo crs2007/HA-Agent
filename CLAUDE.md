@@ -67,6 +67,16 @@ Two MCP servers connect agents to Home Assistant:
 
 The `HASS_TOKEN` environment variable must be set before launching Claude Code.
 
+## Task Board Service
+
+The Tix task pipeline is backed by the **TaskManager** SQL Server DB (`SQLSERVER2022`). Two interfaces:
+
+- **`mssql` MCP server** (primary): stdio, spawned per session by Claude Code from `.mcp.json`. Connects over TCP with the `HA_Task_DBAccess` SQL login. This is Tix's main data path.
+- **`ha-task-server` Docker container** (web UI + REST fallback): the always-on board at `http://localhost:3001`, replacing the old manual `npm run tasks`. Runs on the Windows PC via Docker Desktop, reaching host SQL Server through `host.docker.internal,1433`.
+  - Source: `services/ha-task-server/` (Dockerfile + docker-compose.yml). Password lives in the gitignored `services/ha-task-server/.env`.
+  - Start/rebuild: `docker compose -f services/ha-task-server/docker-compose.yml up -d --build`. With `restart: unless-stopped` it auto-starts whenever Docker Desktop launches.
+  - `tools/task-server.js` selects its DB driver by env: TCP `mssql` when `MSSQL_SERVER` is set (container), else named-pipe `msnodesqlv8` (Windows host, original behavior).
+
 ## Git Workflow — Live-Instance-First Strategy
 
 **The live HA instance is the source of truth.** No GitHub mirror exists yet.

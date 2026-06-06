@@ -1,5 +1,6 @@
 # Secrets
 .env
+services/ha-task-server/.env   # SQL login password for the task-board container
 *.token
 secrets.yaml
 
@@ -12,8 +13,8 @@ _bmad/bmm/knowledge/inventory/raw/
 # Playwright MCP session artifacts (HA URLs, auth errors)
 .playwright-mcp/
 
-# Generated task artifacts (device IPs, entity IDs, PII)
-_bmad/bmm/tasks/
+# Task board — track tasks.json, exclude backup snapshots
+_bmad/bmm/tasks/backups/
 
 # Local Claude settings with tokens
 .claude/settings.json
@@ -21,8 +22,16 @@ _bmad/bmm/tasks/
 .claude/ha-mcp-audit.log
 .mcp.json
 
-# Node
+# Node / Playwright
 node_modules/
+playwright-report/
+blob-report/
+test-results/
+.auth/
+playwright/.auth/
+.playwright/
+*.png
+*.zip
 
 # Home Assistant database and runtime
 home-assistant_v2.db
@@ -47,3 +56,7 @@ desktop.ini
 .vscode/
 .idea/
 tools/_scratch/
+
+# Claude
+CLAUDE.md
+.claude/
