@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Cross-tool note:** `AGENTS.md` mirrors the shared subset of this file for non-Claude tools (VS Code Copilot agents, etc.). Keep the two in sync — `CLAUDE.md` is the Claude-specific source of truth. For running these agents in the VS Code Agents window, see `docs/vscode-agents-window.md`.
+
 ## Project Overview
 
 This is a BMAD-METHOD project with four specialized AI agents for managing Sharon's Home Assistant system.

@@ -26,6 +26,8 @@ This repo contains the Claude Code configuration, skills, and knowledge base for
 
 Standard BMAD agents (`/bmad-architect`, `/bmad-dev`, `/bmad-pm`, etc.) are also available.
 
+These personas also run in the **VS Code Agents window** (Claude Agent and Copilot CLI/Cloud) — see [docs/vscode-agents-window.md](docs/vscode-agents-window.md).
+
 ## Prerequisites
 
 1. **Claude Code** installed and running
